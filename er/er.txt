@@ -1,0 +1,46 @@
+digraph machine02 {
+   # rankdir=LF
+   node [shape="record", style="filled", fillcolor="green",
+         fontname="DejaVu Sans Mono"]
+   
+   game [
+      label="{GAME|*ID (int)\ntitle (text)\nyear (int)\nfranchise (ref)\nvote (int)\npriority (int)\nimg (text)\nnote(text)}"
+   ]
+   platform [
+      label="{PLATFORM|*ID(int)\nname (text)\nicon (text)\ndevice (text)| es. ps4, ps3, win, linux, mac, android|identifica quindi un sistema operativo\nassociabile univocamente \nad un dato device\n(device=ps, pc, cell}"
+   ]
+   store [
+      label="{STORE|*ID (int)\nname (text)\nicon (text)| es. psn, steam, gog}"
+   ]
+   tag [
+      label="{TAG|*ID (int)\nname (text)}"
+   ]
+   
+   gametag [ fillcolor="grey",
+      label="{GAMETAG|**tag.id (ref)\ngame.id (ref)}"
+   ]
+   
+   
+   game_splat [ fillcolor="grey",
+      label="{GAMESPLAT|***game.id (ref)\nstore.id (ref)\nplatform.id (ref)\nlink (text)\nsubscription.id (ref)}"
+   ]
+   
+   subscription [
+      label="{SUBSCRIPTION|*id (int)\nname (text)\nicon (text)\nd (int)\nm (int)\ny (int)\n|es. 'ps+'\nd,m,y sono i campi per\nla data di termine}"
+   ]
+   
+   franchise [
+       label="{FRANCHISE|*ID (int)\nname (text)\nimg (text)|es. Assassin's Creed}"
+   ]
+   
+   {rank=min subscription}
+   
+   
+   gametag ->  game
+   gametag ->  tag
+   game_splat -> game
+   game_splat -> store
+   game_splat -> platform
+   game_splat -> subscription
+   game -> franchise
+} 
