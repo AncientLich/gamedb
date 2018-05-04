@@ -8,6 +8,12 @@ class GameDB:
         self.conn = sqlite3.connect(dbname)
         self.cursor = self.conn.cursor()
         self._create_tables()
+        self.filters = {}
+        self.fields = ('id', 'name', 'icon', 'device', 'title', 'year',
+                       'franchiseid', 'vote', 'priority', 'img', 'note',
+                       'link', 'd', 'm', 'y',
+                       'gameid', 'tagid', 'storeid', 'platformid',
+                       'subscriptionid')
     
     def _create_tables(self):
         self.cursor.execute("PRAGMA foreign_keys=ON")
@@ -161,6 +167,30 @@ class GameDB:
         myval = self.cursor.execute(
             'SELECT * FROM platform WHERE name=?', (name,))
         return myval.fetchall()
+    
+    def _validate_filters(self, table, field, value, fop=None):
+        if fop is not None and fop not in ('==',):
+            raise ValueError('invalid operator for "fop": {}', fop)
+        elif table not in self._list_tables():
+            raise ValueError('invalid table: {}', table)
+        elif field not in self.fields:
+            raise ValueError('invalid field: {}', field)
+    
+    def _mk_filterkey(self, table, field, value):
+        if table == 'store' or table == 'platform':
+            return '{}=={}'.format(table, value)
+        else:
+            return '{}.{}'.format(table, field)
+    
+    def new_filter(self, table, field, fop, value):
+        self._validate_filters(table, field, value, fop)
+        key = self._mk_filterkey(table, field, value)
+        self.filters[key] = ('{}.{} {} '.format(table, field, fop), value)
+    
+    def del_filter(self, table, field, value):
+        self._validate_filters(table, field, value)
+        key = self._mk_filterkey(table, field, value)
+        self.filters.pop(key, None)
     
     def close(self):
         self.conn.close()

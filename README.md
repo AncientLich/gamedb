@@ -8,6 +8,8 @@ Instructions about gamedb components and how to use them will be provided
 in a future.
 
 Requirements:
-    * Python 3.5+
-    * PySide (it will be PySide2 soon) [+Qt4]
-    * sqlite3
+
+* Python 3.5+
+* PySide (it will be PySide2 soon) [+Qt4]
+* sqlite3
+
