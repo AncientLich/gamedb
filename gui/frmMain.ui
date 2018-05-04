@@ -1,0 +1,726 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>frmMainDLG</class>
+ <widget class="QMainWindow" name="frmMainDLG">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1235</width>
+    <height>597</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,9">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_3" stretch="3,4,1,3">
+      <item>
+       <widget class="QGroupBox" name="box_hardware">
+        <property name="title">
+         <string>Hardware</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="10,1">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="pc">
+             <property name="text">
+              <string>PC</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnPcplat">
+             <property name="maximumSize">
+              <size>
+               <width>30</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="ps4">
+           <property name="text">
+            <string>PS4</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="ps3">
+           <property name="text">
+            <string>PS3</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="ps_vita">
+           <property name="text">
+            <string>PS vita</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="box_store">
+        <property name="title">
+         <string>Store</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QCheckBox" name="steam">
+           <property name="text">
+            <string>Steam</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="gog">
+           <property name="text">
+            <string>GOG</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="uplay">
+           <property name="text">
+            <string>Uplay</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="ps_store">
+           <property name="text">
+            <string>PS store</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="phisical">
+           <property name="text">
+            <string>&lt;phisical&gt;</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="box_display">
+        <property name="title">
+         <string>Show by...</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_5" stretch="4,5,2,3">
+         <item>
+          <widget class="QRadioButton" name="showGames">
+           <property name="text">
+            <string>Game</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="showFranchises">
+           <property name="text">
+            <string>Franchise</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="franchise">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QPushButton" name="brnSearch">
+          <property name="text">
+           <string>Search...</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="searchbar">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>30</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QScrollArea" name="scrollArea">
+        <property name="widgetResizable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="gameArea">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>1068</width>
+           <height>1068</height>
+          </rect>
+         </property>
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="5" column="2">
+           <widget class="GButton" name="b28">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="GButton" name="b02">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="GButton" name="b03">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="GButton" name="b04">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="GButton" name="b05">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="GButton" name="b06">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="GButton" name="b07">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="GButton" name="b08">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="GButton" name="b09">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="GButton" name="b10">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="GButton" name="b11">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="GButton" name="b12">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="GButton" name="b13">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="GButton" name="b14">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4">
+           <widget class="GButton" name="b15">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="GButton" name="b16">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="GButton" name="b17">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="GButton" name="b18">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="GButton" name="b19">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="4">
+           <widget class="GButton" name="b20">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="GButton" name="b21">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="GButton" name="b22">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="GButton" name="b23">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="GButton" name="b24">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="4">
+           <widget class="GButton" name="b25">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="GButton" name="b27">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="GButton" name="b01">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="GButton" name="b26">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="3">
+           <widget class="GButton" name="b29">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="4">
+           <widget class="GButton" name="b30">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>170</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>PushButton</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,20">
+        <item>
+         <widget class="QPushButton" name="btnPrev">
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>&lt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="page">
+          <property name="maximumSize">
+           <size>
+            <width>50</width>
+            <height>30</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="totalPages">
+          <property name="text">
+           <string>/ 999</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnNext">
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1235</width>
+     <height>25</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GButton</class>
+   <extends>QPushButton</extends>
+   <header>gui/gbutton.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
