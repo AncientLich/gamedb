@@ -169,14 +169,14 @@ class TestGameDB(unittest.TestCase):
     def test_mk_filterkey(self):
         for table, values in [('platform', ['ps4', 'ps_vita', 'ps3',
                                             'win', 'linux', 'mac']),
-                              ('store', ['steam', 'gog', 'uplay', 'psn'])]:
+                              ('store', ['steam', 'gog', 'uplay', 'psn']),
+                              ('tag', ['action', 'indie']) ]:
             for value in values:
                 self.assertEqual(
                     self.gamedb._mk_filterkey(table, 'name', value),
-                    '{}=={}'.format(table, value)
+                    '{}.{}'.format(table, value)
                 )
         for table, field, value in [('game', 'name', 'Bloodborne'),
-                                    ('tag', 'id', 3),
                                     ('franchise', 'img', 'txt.txt'),
                                     ('subscription', 'd', 22)]:
             self.assertEqual(
@@ -189,23 +189,26 @@ class TestGameDB(unittest.TestCase):
         self.gamedb.new_filter('game', 'name', '==', 'Bloodborne')
         self.gamedb.new_filter('store', 'name', '==', 'psn')
         self.gamedb.new_filter('platform', 'name', '==', 'linux')
+        self.gamedb.new_filter('tag', 'name', '==', 'adventure')
         self.assertEqual(
             sorted(self.gamedb.filters),
             sorted(
-                {'store==psn': ('store.name == ', 'psn'),
-                 'platform==linux': ('platform.name == ', 'linux'),
-                  'game.name': ('game.name == ', 'Bloodborne')}
+                {'store.psn': ('store.name == ', 'psn'),
+                 'platform.linux': ('platform.name == ', 'linux'),
+                 'game.name': ('game.name == ', 'Bloodborne'),
+                 'tag.adventure': ('tag.name == ', 'adventure') }
             )
         )
         self.gamedb.del_filter('store', 'name', 'psn')
         self.gamedb.del_filter('game', 'name', 'Bloodborne')
+        self.gamedb.del_filter('tag', 'name', 'adventure')
         # this last filter does not exist, so this command will be 'ignored'
         # filters will be not modified after the following command:
         self.gamedb.del_filter('platform', 'name', 'mac')
         # now checking if all is good
         self.assertEqual(
             self.gamedb.filters,
-            {'platform==linux': ('platform.name == ', 'linux')}
+            {'platform.linux': ('platform.name == ', 'linux')}
         )
     
     def test_pass(self):

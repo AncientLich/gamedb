@@ -177,8 +177,8 @@ class GameDB:
             raise ValueError('invalid field: {}', field)
     
     def _mk_filterkey(self, table, field, value):
-        if table == 'store' or table == 'platform':
-            return '{}=={}'.format(table, value)
+        if table in ('store', 'platform', 'tag'):
+            return '{}.{}'.format(table, value)
         else:
             return '{}.{}'.format(table, field)
     

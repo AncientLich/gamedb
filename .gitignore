@@ -2,8 +2,11 @@ er/er.png
 __pycache__/
 gamedb/__pycache__/
 gui/__pycache__/
+test/__pycache__/
 img/
+img.tar.gz
+games.db
+t
 games.csv
 games2.csv
 dlcs.csv
-games.db
