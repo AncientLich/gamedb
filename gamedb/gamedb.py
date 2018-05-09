@@ -18,16 +18,14 @@ class _FilterGamesJoinMMR:
             self.values = None
             return None
         self.relation = relation
-        self.values = []
-        for v in data:
-            self.values.append(v.lower())
+        self.values = [x.lower() for x in data]
         self.joins = ['INNER JOIN {} ON {}.id = {}.{}id'.format(
                           table, table, relation, table
                          )]
         self.op = op
-        self.where = []
-        for value in self.values:
-            self.where.append('lower({}.name) {} ?'.format(table, op))
+        self.where = [
+            'lower({}.name) {} ?'.format(table, op) for x in self.values
+        ]
         self.where = ' OR '.join(self.where)
         if len(data) > 1:
             self.where = '({})'.format(self.where)
@@ -52,13 +50,13 @@ WHERE {})'''.format(self.relation, self._printJoins(), self.where)
         if not isinstance(other, _FilterGamesJoinMMR):
             raise ValueError('other must be a _FilterGamesJoinMMR object')
         elif self.relation != other.relation:
-            raise ValueError('{}{}({} != {})'.format(
-                'cannot update _FilterGamesJoin:\n',
-                'relations must be equal, but differs\n',
-                self.relation, other.relation)
+            raise ValueError(
+                'cannot update _FilterGamesJoin:\n'
+                'relations must be equal, but differs\n'
+                '({} != {})'.format(self.relation, other.relation)
             )
         self.joins.append(other.joins[0])
-        self.where = '{} AND {}'.format(self.where, other.where)
+        self.where += ' AND {}'.format(other.where)
         self.values += other.values
 
 
@@ -206,9 +204,7 @@ class GameDB:
                 (value.lower(),)
         )
         myval = myval.fetchall()
-        if len(myval) == 0:
-            return None
-        else:
+        if myval:
             return myval[0][0]
     
     # Add a game from a single csv entry.
@@ -270,7 +266,7 @@ class GameDB:
         query = 'SELECT id, title, vote, priority, img FROM game'
         query_segments = []
         if not all(var is None for var in args):
-            query = query + ' WHERE '
+            query += ' WHERE '
         injoins = {}
         values = []
         for table, relation, op, data in [
@@ -300,8 +296,8 @@ class GameDB:
         for j in injoins.values():
             query_segments.append( 'id IN\n{}'.format(str(j)) )
             values += j.values
-        query = query + '\nAND '.join(query_segments)
-        query = query + '\nORDER BY title LIMIT 30{}'.format(offset)
+        query += '\nAND '.join(query_segments)
+        query += '\nORDER BY title LIMIT 30{}'.format(offset)
         query = query.strip()
         return (query, values)
     
