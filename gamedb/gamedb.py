@@ -286,7 +286,7 @@ class GameDB:
                 injoins[relation] = injoin_candidate
         offset = ''
         if page > 1:
-            offset = 'OFFSET {} '.format(30 * (page -1))
+            offset = ' OFFSET {}'.format(30 * (page -1))
         if title is not None:
             query_segments.append('lower(title) LIKE ?')
             values.append('%{}%'.format(title.lower()))
@@ -301,7 +301,7 @@ class GameDB:
             query_segments.append( 'id IN\n{}'.format(str(j)) )
             values += j.values
         query = query + '\nAND '.join(query_segments)
-        query = query + '\nLIMIT 30 {}ORDER BY game.name'.format(offset)
+        query = query + '\nORDER BY title LIMIT 30{}'.format(offset)
         query = query.strip()
         return (query, values)
     
@@ -312,6 +312,9 @@ class GameDB:
                 title=title, tag=tag, platform=platform,
                 store=store, franchise=franchise, page=page
         )
+        result = self.cursor.execute(query, values)
+        result = result.fetchall()
+        return result
         
         
         

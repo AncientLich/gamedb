@@ -101,7 +101,7 @@ class TestGameDB(unittest.TestCase):
              (5, 'cd'), (6, 'hd')]
         )
     
-    def test_add_game_csv(self):
+    def add_csv_games(self):
         first = True
         self.gamedb.add_platform('ps4', 'ps')
         self.gamedb.add_platform('linux', 'pc')
@@ -127,6 +127,9 @@ class TestGameDB(unittest.TestCase):
                     self.gamedb.add_game(*params)
                 else:
                     first = False
+    
+    def test_add_game_csv(self):
+        self.add_csv_games()
         # ------ GAMEPSLAT -------
         gid1 = self.gamedb._sid('game', 'title', 'Bloodborne')
         gid2 = self.gamedb._sid('game', 'title', "Don’t Starve")
@@ -264,7 +267,7 @@ class TestGameDB(unittest.TestCase):
             ),
             # this must be the last query piece (fixed_position = index 4)
             TmpPiece(
-                '\nLIMIT 30 OFFSET 60 ORDER BY game.name',
+                '\nORDER BY title LIMIT 30 OFFSET 60',
                 [],
                 fixed_position = 4
             )
@@ -303,4 +306,21 @@ class TestGameDB(unittest.TestCase):
         self.assertEqual(values, expected_values)
     
     def test_filter_games(self):
-        pass
+        self.add_csv_games()
+        bb = self.gamedb.filter_games(
+            title='BloodBorne',
+            tag=['adventure'],
+            store=['psn'],
+            platform=['ps4']
+        )
+        ds = self.gamedb.filter_games(
+            title='Starve',
+            store=['steam'],
+            platform=['linux']
+        )
+        ds2 = self.gamedb.filter_games(
+            franchise='starVe'
+        )
+        self.assertEqual(ds, ds2)
+        self.assertEqual(ds, [(2, "Don’t Starve", 79, 0, 'dont_starve.png')])
+        self.assertEqual(bb, [(1, 'Bloodborne', 92, 8, 'bloodborne.png')])
