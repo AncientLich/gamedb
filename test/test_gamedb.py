@@ -158,58 +158,97 @@ class TestGameDB(unittest.TestCase):
         res = res.fetchall()
         self.assertEqual(res, [(1, 'ps+', 'psplus.png', 11,4,2018)])
     
-    def test_validate_filters(self):
-        for field in self.gamedb.fields:
-            with self.assertRaises(ValueError):
-                self.gamedb._validate_filters(field, field, None)
-        for table in self.gamedb._list_tables():
-            with self.assertRaises(ValueError):
-                self.gamedb._validate_filters(table, table, None)
-                
-    def test_mk_filterkey(self):
-        for table, values in [('platform', ['ps4', 'ps_vita', 'ps3',
-                                            'win', 'linux', 'mac']),
-                              ('store', ['steam', 'gog', 'uplay', 'psn']),
-                              ('tag', ['action', 'indie']) ]:
-            for value in values:
-                self.assertEqual(
-                    self.gamedb._mk_filterkey(table, 'name', value),
-                    '{}.{}'.format(table, value)
-                )
-        for table, field, value in [('game', 'name', 'Bloodborne'),
-                                    ('franchise', 'img', 'txt.txt'),
-                                    ('subscription', 'd', 22)]:
-            self.assertEqual(
-                self.gamedb._mk_filterkey(table, field, value),
-                '{}.{}'.format(table, field)
-            )
-    
-    def test_newdel_filter(self):
-        # this will test both new_filter and del_filter
-        self.gamedb.new_filter('game', 'name', '==', 'Bloodborne')
-        self.gamedb.new_filter('store', 'name', '==', 'psn')
-        self.gamedb.new_filter('platform', 'name', '==', 'linux')
-        self.gamedb.new_filter('tag', 'name', '==', 'adventure')
-        self.assertEqual(
-            sorted(self.gamedb.filters),
-            sorted(
-                {'store.psn': ('store.name == ', 'psn'),
-                 'platform.linux': ('platform.name == ', 'linux'),
-                 'game.name': ('game.name == ', 'Bloodborne'),
-                 'tag.adventure': ('tag.name == ', 'adventure') }
-            )
+    def test_fgquery(self):
+        # -------------------------------------------------
+        #   PART 1: checking QUERY
+        # -------------------------------------------------
+        query, values = self.gamedb._fgquery(
+            title='BloodBorne', 
+            tag=['indie', 'adventure'],
+            platform=['ps4', 'win', 'linux'],
+            store=['cd', 'psn', 'steam', 'gog'],
+            page=3
         )
-        self.gamedb.del_filter('store', 'name', 'psn')
-        self.gamedb.del_filter('game', 'name', 'Bloodborne')
-        self.gamedb.del_filter('tag', 'name', 'adventure')
-        # this last filter does not exist, so this command will be 'ignored'
-        # filters will be not modified after the following command:
-        self.gamedb.del_filter('platform', 'name', 'mac')
-        # now checking if all is good
-        self.assertEqual(
-            self.gamedb.filters,
-            {'platform.linux': ('platform.name == ', 'linux')}
-        )
+        # we will strip query (removing initial and final spaces) to
+        # allow a better verify
+        query = query.strip()
+        # the resulting query will have a sequences of subqueries wich can
+        # be placed in a different order since iterating dict.values()
+        # does not ensure a fixed order in python < 3.6
+        # (dict.values() is used internally by gamedb._fgquery)
+        # so we collect the pieces in a tmp object with the relative values
+        class TmpPiece():
+            def __init__(self, piece, values, *, fixed_position=None):
+                self.piece = piece
+                self.values = values
+                self.index = None
+                self.fixed_position = fixed_position
+        
+        org_query_pieces = [
+            # this must be the first query piece (fixed_position = index 0)
+            TmpPiece(
+                'SELECT id, title, vote, priority, img ' 
+                'FROM game WHERE lower(title) LIKE ?',
+                ['%bloodborne%',],
+                fixed_position = 0
+            ),
+            TmpPiece(
+                '\nAND id IN\n'
+                '(SELECT gameid from gamesplat\n'
+                'INNER JOIN platform ON platform.id = gamesplat.platformid\n'
+                'INNER JOIN store ON store.id = gamesplat.storeid\n'
+                'WHERE (lower(platform.name) = ? OR lower(platform.name) = ? '
+                'OR lower(platform.name) = ?) AND (lower(store.name) = ? OR '
+                'lower(store.name) = ? OR lower(store.name) = ? '
+                'OR lower(store.name) = ?))',
+                ['ps4', 'win', 'linux', 'cd', 'psn', 'steam', 'gog']
+            ),
+            TmpPiece(
+                '\nAND id IN\n'
+                '(SELECT gameid from gametag\n'
+                'INNER JOIN tag ON tag.id = gametag.tagid\n'
+                'WHERE (lower(tag.name) = ? OR lower(tag.name) = ?))',
+                ['indie', 'adventure']
+            ),
+            # this must be the last query piece (fixed_position = index 3)
+            TmpPiece(
+                '\nLIMIT 30 OFFSET 60 ORDER BY game.name',
+                [],
+                fixed_position = 3
+            )
+        ]
+        sorted_query_pieces = []
+        # now we do a loop of four time check, since total pieces are four
+        # this will prevent infinite loop
+        # the R value will be not used
+        # every time a query piece is found, that piece is removed from 'query' 
+        for R in range(4):
+            # the 'i' index obtained from 'enumerate' is only needed when
+            # removing the piece from the original list org_query_pieces
+            #      org_query_pieces.pop(i)
+            for i, piece in enumerate(org_query_pieces):
+                if query.startswith(piece.piece):
+                    piece.index = len(sorted_query_pieces)
+                    # test fails if a piece with fixed position is placed
+                    # in a different position than the expected one
+                    if piece.fixed_position is not None:
+                        self.assertEqual(piece.index, piece.fixed_position)
+                    sorted_query_pieces.append(piece)
+                    query = query.replace(piece.piece, '')
+                    org_query_pieces.pop(i)
+                    break
+        # now 'query' should be empty (all pieces should be removed)
+        self.assertEqual(query, '')
+        # -------------------------------------------------
+        #   PART 2: checking VALUES
+        # -------------------------------------------------
+        # also values should follow the order of the query pieces
+        # so we need to build the expected_values list to be compared
+        # with the values returned by gamedb._fgquery
+        expected_values = []
+        for piece in sorted_query_pieces:
+            expected_values += piece.values
+        self.assertEqual(values, expected_values)
     
-    def test_pass(self):
+    def test_filter_games(self):
         pass
