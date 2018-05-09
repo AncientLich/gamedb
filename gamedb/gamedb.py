@@ -269,7 +269,7 @@ class GameDB:
         args = [title, tag, platform, store, franchise]
         query = 'SELECT id, title, vote, priority, img FROM game'
         query_segments = []
-        if not all(var is not None for var in args):
+        if not all(var is None for var in args):
             query = query + ' WHERE '
         injoins = {}
         values = []
@@ -290,6 +290,13 @@ class GameDB:
         if title is not None:
             query_segments.append('lower(title) LIKE ?')
             values.append('%{}%'.format(title.lower()))
+        if franchise is not None:
+            query_segments.append(
+                'franchiseid IN\n'
+                '(SELECT franchise.id FROM franchise WHERE '
+                'franchise.name LIKE ?)'
+            )
+            values.append('%{}%'.format(franchise.lower()))
         for j in injoins.values():
             query_segments.append( 'id IN\n{}'.format(str(j)) )
             values += j.values
@@ -303,7 +310,7 @@ class GameDB:
         # franchise is not yet supported, this is why we set it to None
         query, values = self._fgquery(
                 title=title, tag=tag, platform=platform,
-                store=store, franchise=None, page=page
+                store=store, franchise=franchise, page=page
         )
         
         

@@ -210,11 +210,14 @@ class TestGameDB(unittest.TestCase):
             tag=['indie', 'adventure'],
             platform=['ps4', 'win', 'linux'],
             store=['cd', 'psn', 'steam', 'gog'],
+            franchise="Starve",
             page=3
         )
         # we will strip query (removing initial and final spaces) to
         # allow a better verify
         query = query.strip()
+        with open('debugdebug.txt', 'w', encoding='utf-8') as fo:
+            print(query, file=fo)
         # the resulting query will have a sequences of subqueries wich can
         # be placed in a different order since iterating dict.values()
         # does not ensure a fixed order in python < 3.6
@@ -236,6 +239,12 @@ class TestGameDB(unittest.TestCase):
                 fixed_position = 0
             ),
             TmpPiece(
+                '\nAND franchiseid IN\n'
+                '(SELECT franchise.id FROM franchise WHERE '
+                'franchise.name LIKE ?)',
+                ['%starve%',]
+            ),
+            TmpPiece(
                 '\nAND id IN\n'
                 '(SELECT gameid from gamesplat\n'
                 'INNER JOIN platform ON platform.id = gamesplat.platformid\n'
@@ -253,11 +262,11 @@ class TestGameDB(unittest.TestCase):
                 'WHERE (lower(tag.name) = ? OR lower(tag.name) = ?))',
                 ['indie', 'adventure']
             ),
-            # this must be the last query piece (fixed_position = index 3)
+            # this must be the last query piece (fixed_position = index 4)
             TmpPiece(
                 '\nLIMIT 30 OFFSET 60 ORDER BY game.name',
                 [],
-                fixed_position = 3
+                fixed_position = 4
             )
         ]
         sorted_query_pieces = []
@@ -265,7 +274,7 @@ class TestGameDB(unittest.TestCase):
         # this will prevent infinite loop
         # the R value will be not used
         # every time a query piece is found, that piece is removed from 'query' 
-        for R in range(4):
+        for R in range(5):
             # the 'i' index obtained from 'enumerate' is only needed when
             # removing the piece from the original list org_query_pieces
             #      org_query_pieces.pop(i)
