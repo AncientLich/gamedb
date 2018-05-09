@@ -2,8 +2,51 @@ import os
 import re
 import sqlite3
 import unittest
-from gamedb.gamedb import *
+from gamedb.gamedb import GameDB
+from gamedb.gamedb import _FilterGamesJoinMMR
 
+
+
+class TestFilterGamesJoinMMR(unittest.TestCase):
+    def test_init_and_str(self):
+        t = _FilterGamesJoinMMR('store', 'gamesplat', '=', None)
+        self.assertEqual(str(t), '')
+        with self.assertRaises(AttributeError):
+            getattr(t, 'relation')
+        # with self.assertRaises
+        t = _FilterGamesJoinMMR('platform', 'gamesplat', '=', ['linux', 'PS4'])
+        self.assertEqual(t.values, ['linux', 'ps4'])
+        self.assertEqual(t.joins, [
+            'INNER JOIN platform ON platform.id = gamesplat.platformid']
+        )
+        self.assertEqual(t.op, '=')
+        self.assertEqual(t.where, 
+            '(lower(platform.name) = ? OR lower(platform.name) = ?)'
+        )
+        self.assertEqual(str(t),
+            '(SELECT gameid from gamesplat\n'
+            'INNER JOIN platform ON platform.id = gamesplat.platformid\n'
+            'WHERE (lower(platform.name) = ? OR lower(platform.name) = ?))'
+        )
+    
+    def test_update(self):
+        t1 = _FilterGamesJoinMMR('platform', 'gamesplat', '=', ['linux', 'PS4'])
+        t2 = _FilterGamesJoinMMR('store', 'gamesplat', '=', ['psn', 'gog'])
+        t3 = _FilterGamesJoinMMR('tag', 'gametag', '=', ['indie', 'adventure'])
+        with self.assertRaises(ValueError):
+            t1.update(15)
+        with self.assertRaises(ValueError):
+            t1.update(t3)
+        t1.update(t2)
+        self.assertEqual(t1.values, ['linux', 'ps4', 'psn', 'gog'])
+        # this test will implicity ensure that _printJoins worlk correctly
+        self.assertEqual(str(t1),
+            '(SELECT gameid from gamesplat\n'
+            'INNER JOIN platform ON platform.id = gamesplat.platformid\n'
+            'INNER JOIN store ON store.id = gamesplat.storeid\n'
+            'WHERE (lower(platform.name) = ? OR lower(platform.name) = ?) '
+            'AND (lower(store.name) = ? OR lower(store.name) = ?))'
+        )
 
 
 class TestGameDB(unittest.TestCase):
