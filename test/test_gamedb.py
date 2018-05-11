@@ -4,6 +4,8 @@ import sqlite3
 import unittest
 from gamedb.gamedb import GameDB
 from gamedb.gamedb import _FilterGamesJoinMMR
+from gamedb.gameview import StorePlat
+from gamedb.gameview import GameView
 
 
 
@@ -105,11 +107,14 @@ class TestGameDB(unittest.TestCase):
         first = True
         self.gamedb.add_platform('ps4', 'ps')
         self.gamedb.add_platform('linux', 'pc')
+        self.gamedb.add_platform('win', 'pc')
         self.gamedb.add_store('psn')
         self.gamedb.add_store('steam')
+        self.gamedb.add_store('gog')
         self.gamedb.add_tag('action')
         self.gamedb.add_tag('indie')
         self.gamedb.add_tag('adventure')
+        self.gamedb.add_tag('survival')
         self.gamedb.add_franchise("Don’t Starve")
         self.gamedb.add_subscription('ps+', 'psplus.png', 11, 4, 2018)
         with open('test_games.csv', 'r', encoding='utf-8') as fi:
@@ -135,23 +140,26 @@ class TestGameDB(unittest.TestCase):
         gid2 = self.gamedb._sid('game', 'title', "Don’t Starve")
         pid1 = self.gamedb._sid('platform', 'name', 'ps4')
         pid2 = self.gamedb._sid('platform', 'name', 'linux')
+        pid3 = self.gamedb._sid('platform', 'name', 'win')
         sid1 = self.gamedb._sid('store', 'name', 'psn')
         sid2 = self.gamedb._sid('store', 'name', 'steam')
+        sid3 = self.gamedb._sid('store', 'name', 'gog')
         res = self.gamedb.cursor.execute(
             'SELECT gameid, storeid, platformid from gamesplat')
         res = res.fetchall()
         self.assertEqual( sorted(res), sorted(
-            [(gid1, sid1, pid1),(gid2, sid2, pid2)]) )
+            [(gid1, sid1, pid1), (gid2, sid2, pid2), (gid2, sid3, pid3)]) )
         # ---- GAMETAG ---------
         tag1a = self.gamedb._sid('tag', 'name', 'action')
         tag1b = self.gamedb._sid('tag', 'name', 'adventure')
-        tag2 = self.gamedb._sid('tag', 'name', 'indie')
+        tag2a = self.gamedb._sid('tag', 'name', 'indie')
+        tag2b = self.gamedb._sid('tag', 'name', 'survival')
         res = self.gamedb.cursor.execute(
             'SELECT gameid, tagid from gametag'
         )
         res = res.fetchall()
         self.assertEqual(sorted(res), sorted(
-            [(gid1, tag1a), (gid1, tag1b), (gid2, tag2)]) )
+            [(gid1, tag1a), (gid1, tag1b), (gid2, tag2a), (gid2, tag2b)]) )
         # ------ FRANCHISE -------------------
         f = self.gamedb._sid('franchise', 'name', "Don’t Starve")
         res = self.gamedb.cursor.execute(
@@ -324,3 +332,37 @@ class TestGameDB(unittest.TestCase):
         self.assertEqual(ds, ds2)
         self.assertEqual(ds, [(2, "Don’t Starve", 79, 0, 'dont_starve.png')])
         self.assertEqual(bb, [(1, 'Bloodborne', 92, 8, 'bloodborne.png')])
+    
+    
+    def test_viewgame(self):
+        self.add_csv_games()
+        game = self.gamedb.gameview(1)
+        self.assertEqual(game.tags, ['action', 'adventure'])
+        self.assertEqual(game.title, 'Bloodborne')
+        self.assertEqual(game.priority, 8)
+        self.assertEqual(game.vote, 92)
+        self.assertEqual(game.img, 'bloodborne.png')
+        self.assertEqual(len(game.storeplats), 1)
+        self.assertIsNone(game.franchise)
+        splat = game.storeplats[0]
+        self.assertEqual(splat.subscription, 'ps+')
+        self.assertEqual(splat.lang, 'it')
+        self.assertEqual(splat.store, 'psn')
+        self.assertEqual(splat.platform, 'ps4')
+        self.assertEqual(splat.link,
+            'https://store.playstation.com/it-it/product/'
+            'EP9000-CUSA00207_00-BLOODBORNE0000EU?emcid=pa-st-111284'
+        )
+        game = self.gamedb.gameview(2)
+        self.assertEqual(game.tags, ['indie', 'survival'])
+        self.assertEqual(game.franchise, "Don’t Starve")
+        self.assertEqual(len(game.storeplats), 2)
+        splat = game.storeplats[0]
+        splat2 = game.storeplats[1]
+        self.assertIsNone(splat.subscription)
+        self.assertIsNone(splat.link)
+        self.assertEqual(splat.lang, 'en')
+        self.assertEqual(splat.store, 'steam')
+        self.assertEqual(splat.platform, 'linux')
+        self.assertEqual(splat2.store, 'gog')
+        self.assertEqual(splat2.platform, 'win')

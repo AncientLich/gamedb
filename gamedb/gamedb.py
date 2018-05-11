@@ -1,6 +1,7 @@
 import os
 import re
 import sqlite3
+from gamedb.gameview import GameView
 
 
 # This class represents a single subquery with inner join(s) when 
@@ -91,8 +92,8 @@ class GameDB:
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS store 
            (id integer PRIMARY KEY AUTOINCREMENT, name text, icon text)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS gamesplat
-           (gameid integer, storeid integer, platformid integer, link text,
-            subscriptionid integer,
+           (gameid integer, storeid integer, platformid integer, 
+            lang text, link text, subscriptionid integer,
             FOREIGN KEY(gameid) REFERENCES game(id),
             FOREIGN KEY(storeid) REFERENCES store(id),
             FOREIGN KEY(platformid) REFERENCES platform(id),
@@ -178,11 +179,11 @@ class GameDB:
     # internal function: this will add an entry to the relational table
     # 'gamesplat'
     # see: add_game(); ER graphic
-    def _addgamesplat(self, gameid, storeid, platformid, link=None, 
+    def _addgamesplat(self, gameid, storeid, platformid, lang='en', link=None, 
                       subscriptionid=None):
         self.cursor.execute(
-            'INSERT OR IGNORE INTO gamesplat VALUES(?,?,?, ?,?)',
-            (gameid, storeid, platformid, link, subscriptionid)
+            'INSERT OR IGNORE INTO gamesplat VALUES(?,?,?, ?,?,?)',
+            (gameid, storeid, platformid, lang, link, subscriptionid)
         )
     
     # internal function: this will add an entry to the relational table
@@ -246,7 +247,7 @@ class GameDB:
             self._addgame_item(title, year, franchiseid, vote, 
                                priority, img, note)
             gid = self._sid('game', 'title', title)
-        self._addgamesplat(gid, storeid, platid, link, subsid)
+        self._addgamesplat(gid, storeid, platid, lang, link, subsid)
         self._addgametag(gid, tagid)
     
     def searchgame(self, title):
@@ -311,9 +312,32 @@ class GameDB:
         result = self.cursor.execute(query, values)
         result = result.fetchall()
         return result
-        
-        
-        
+    
+    def gameview(self, gameid, *, view='name'):
+        if view not in ('name', 'icon'):
+            raise ValueError("view legal values are only 'name' or 'icon'")
+        storeplats = self.cursor.execute('''
+            SELECT store.{}, platform.{}, gamesplat.lang, gamesplat.link, 
+            subscription.{}, subscription.d, subscription.m, subscription.y
+            FROM gamesplat
+            INNER JOIN platform ON platform.id = gamesplat.platformid
+            INNER JOIN store ON store.id = gamesplat.platformid
+            LEFT JOIN subscription ON subscription.id = gamesplat.subscriptionid
+            WHERE gamesplat.gameid = ?'''.format(view, view, view), (gameid,))
+        storeplats = storeplats.fetchall()
+        tags = self.cursor.execute('''
+            SELECT tag.name FROM gametag
+            INNER JOIN tag ON tag.id = gametag.tagid
+            WHERE gametag.gameid = ?''', (gameid,))
+        tags = tags.fetchall()
+        gameinfos = self.cursor.execute('''
+            SELECT game.id, game.title, game.year, franchise.name,
+            game.vote, game.priority, game.img, game.note
+            FROM game
+            LEFT JOIN franchise ON franchise.id = game.franchiseid
+            WHERE game.id = ?''', (gameid,))
+        gameinfos = gameinfos.fetchall()
+        return GameView(gameinfos[0], storeplats, tags)
     
     def todo(self):
         pass
