@@ -4,17 +4,25 @@ import sqlite3
 from gamedb.gameview import GameView
 
 
-# This class represents a single subquery with inner join(s) when 
-# a relation table is involved (many to many relation)
-# This is designed specifically for 
-# 'filter games' (MMR = many to many relations)
+#---------------------
+# Class the represents a single subquery with inner join(s)
 #
-# table = external table that is linked into relation table (example: store)
-# relation = relation table (example: gamesplat)
-# op = operator (usually '=', but can be 'LIKE')
-# data = the values to check (usually for table.name)
+# This class is designed specifically for GameDB.filter games
+# (MMR = many to many relations)
+#
+# This class is an internal class and you don't require to use it outside gamedb
+# module
+#---------------------
 class _FilterGamesJoinMMR:
     def __init__(self, table, relation, op, data):
+        # ----
+        # initialize _FilterGamesJoinMMR
+        # params:
+        # table (string) = table name (example: store)
+        # relation (string) = relation table (example: gamesplat)
+        # op (string) = operator (usually '=', but can be 'LIKE')
+        # data (list of strings) = the values to check (usually for table.name)
+        # ----
         if data is None:
             self.values = None
             return None
@@ -40,6 +48,7 @@ class _FilterGamesJoinMMR:
 WHERE {})'''.format(self.relation, self._printJoins(), self.where)
     
     def _printJoins(self):
+        # String convertion (to allow to print the subquery)
         value = ''
         for index, j in enumerate(self.joins):
             if index > 0:
@@ -48,6 +57,8 @@ WHERE {})'''.format(self.relation, self._printJoins(), self.where)
         return value
     
     def update(self, other):
+        # Updates _FilterGamesJoinMMR with data contained into another
+        # _FilterGamesJoinMMR object. Relation tables must be the same
         if not isinstance(other, _FilterGamesJoinMMR):
             raise ValueError('other must be a _FilterGamesJoinMMR object')
         elif self.relation != other.relation:
@@ -62,13 +73,18 @@ WHERE {})'''.format(self.relation, self._printJoins(), self.where)
 
 
 
-class GameDB:    
+'''
+Class that manages all database operations for games.db
+'''
+class GameDB:
     def __init__(self, dbname):
+        '''Intialize database (database_file)'''
         self.conn = sqlite3.connect(dbname)
         self.cursor = self.conn.cursor()
         self._create_tables()
     
     def close(self):
+        '''close database connection'''
         self.conn.close()
     
     # This function will create required tables (see "er" diagram for a
@@ -132,44 +148,51 @@ class GameDB:
         )
         self.conn.commit()
     
-    # add a platform (ps4, ps3, linux, win, ...) into 'platform' table
-    # 'device' should be 'ps' for all playstations; 
-    #          'pc' for 'win', 'linux', 'mac'
     def add_platform(self, name, device, icon=None):
+        '''add a platform (ps4, ps3, linux, win, ...) into 'platform' table
+    
+        'device' should be 'ps' for all playstations; 
+        'device' = 'pc' for the following platforms: 'win', 'linux', 'mac'
+        '''
         self.cursor.execute(
             "INSERT INTO platform VALUES (NULL, ?,?,?)",
             (name, device, icon)
         )
         self.conn.commit()
     
-    # add a store (steam, uplay, gog) into 'store' table
     def add_store(self, name, icon=None):
+        '''add a store (steam, uplay, gog) into 'store' table'''
         self.cursor.execute(
             "INSERT INTO store VALUES (NULL, ?,?)",
             (name, icon)
         )
         self.conn.commit()
     
-    # add a tag (example: indie) into the 'tag' table
-    # you can use only tags that are listed in the 'tag' table
     def add_tag(self, name):
+        ''' add a tag (example: indie) into the 'tag' table
+        
+        You must add_tag(x) before trying to add a game with tag 'x'
+        '''
         self.cursor.execute(
             "INSERT INTO tag VALUES (NULL,?)", (name,)
         )
         self.conn.commit()
     
-    # add a franchise (example: "Assassin's Creed" for AC games)
     def add_franchise(self, name, img=None):
+        '''add a franchise (example: "Assassin's Creed" for AC games)'''
         self.cursor.execute(
             "INSERT INTO franchise VALUES (NULL,?,?)", (name,img)
         )
         self.conn.commit()
     
-    # add a subscription for games that expires together with a subscription
-    # for example: ps plus games will expires when ps+ subscription ends
-    # d, m, y: those fields describe the date of subscription current expire
-    #          date (d=day, m=month, y=year)
     def add_subscription(self, name, icon, d, m, y):
+        '''
+        add a subscription for games that expires together with a subscription
+        
+        for example: ps plus games will expires when ps+ subscription ends
+        d, m, y: those fields describe the date when subscription will expire
+        (d=day, m=month, y=year)
+        '''
         self.cursor.execute(
             "INSERT INTO subscription VALUES (NULL,?,?, ?,?,?)", 
             (name, icon,  d, m, y)
@@ -208,19 +231,23 @@ class GameDB:
         if myval:
             return myval[0][0]
     
-    # Add a game from a single csv entry.
-    # subscription, tag, franchise, store, platform must exists
-    # so you cannot use, for example, a store not listed in 'store' table
-    # note: subscription, franchise and tag can be an empty value
-    #
-    # add_game will:
-    # - add the game in the game table (calling _addgame_item)
-    # - add gamesplat relation (calling _addgamesplat)
-    # - add gametag relation if a non-empty tag is provided (_addgametag)
     def add_game(self, subscription, priority, title, tag, franchise,
                     year, vote, img, lang, store, platform, link, note):
-        # from the csv entry we have 'real' values 
-        #      (subscription.name, franchise.name ...)
+        '''
+        Add a game from a single csv entry.
+        subscription, tag, franchise, store, platform must exists
+        so you cannot use, for example, a store not listed in 'store' table
+        note: subscription, franchise and tag can be an empty value
+        
+        add_game will:
+        - add the game in the game table
+        - add gamesplat relation
+        - add gametag relation if a non-empty tag is provided
+        
+        from the csv entry we will 'real' values 
+          (subscription.name, franchise.name ...)
+        '''
+        # add_game will use _addgame_item to add the game in game table
         # but _addgame_item will need ids (franchiseid, platid) so we
         # callect all the ids we will require
         franchiseid = self._sid('franchise', 'name', franchise)
@@ -251,18 +278,20 @@ class GameDB:
         self._addgametag(gid, tagid)
     
     def searchgame(self, title):
+        '''this function may be removed in a future'''
         myval = self.cursor.execute(
             'SELECT * FROM game WHERE title=?', (title,))
         return myval.fetchall()
     
     def searchplat(self, name):
+        '''this function may be removed in a future'''
         myval = self.cursor.execute(
             'SELECT * FROM platform WHERE name=?', (name,))
         return myval.fetchall()
     
-    # filter ga,es query
-    def _fgquery(self, *, title=None, tag=None, platform=None,
-                     store=None, franchise=None, page=1):
+    # calculate and return query, values for GameDB.filter_games
+    def _fgquery(self, *, title=None, tags=None, platforms=None,
+                     stores=None, franchise=None, page=1):
         args = [title, tag, platform, store, franchise]
         query = 'SELECT id, title, vote, priority, img FROM game'
         query_segments = []
@@ -302,18 +331,52 @@ class GameDB:
         query = query.strip()
         return (query, values)
     
-    def filter_games(self, *, title=None, tag=None, platform=None,
-                     store=None, franchise=None, page=1):
-        # franchise is not yet supported, this is why we set it to None
+    def filter_games(self, *, title=None, tags=None, platforms=None,
+                     stores=None, franchise=None, page=1):
+        '''return a filtered list of games depending on filters
+        
+        Every parameter is a filter that can be asked or not by user
+        title (string): title of game to search
+        tags (list): list of tags (*)
+        platforms (list): list of platforms (*)
+        stores (list): list of stores (*)
+        franchise (string): franchise name to search
+        page (int): search page (useful when total games listed > 30)
+        All those values (except page) can be None if a filter is NOT asked.
+        
+        This function will return a list of tuples. Every tuple will contain:
+        (id, title, vote, priority, img) where:
+        id (integer)        = game ID
+        title (string)      = game title
+        vote (int/None)     = game metacritic vote (0 to 100)
+        priority (int/None) = game priority 'vote' (0 to 10)
+        img (string)        = game image file name
+        
+        Notes:
+        (*) Must be a list even if only one item must be checked. So you need
+        to use a list of one element only if you need to search only one item.
+        '''
         query, values = self._fgquery(
-                title=title, tag=tag, platform=platform,
-                store=store, franchise=franchise, page=page
+                title=title, tags=tags, platforms=platforms,
+                stores=stores, franchise=franchise, page=page
         )
         result = self.cursor.execute(query, values)
         result = result.fetchall()
         return result
     
     def gameview(self, gameid, *, view='name'):
+        '''This function will return details for a single game (GameView)
+        
+        Some informations contained in the GameView object returned by 
+        this function will be different if view='name' or view='icon'
+        By default 'store', 'franchise' and 'subscription' sub-parameters of
+        GameView object will contain its name (view='name')
+        It is possible to use view='icon' to store icon file names instead.
+        All other GameView subparameters will not depend of 'view' type.
+        
+        For other informations about object returned by this function, please
+        see GameView class
+        '''
         if view not in ('name', 'icon'):
             raise ValueError("view legal values are only 'name' or 'icon'")
         storeplats = self.cursor.execute('''
@@ -330,6 +393,7 @@ class GameDB:
             INNER JOIN tag ON tag.id = gametag.tagid
             WHERE gametag.gameid = ?''', (gameid,))
         tags = tags.fetchall()
+        tags = [x[0] for x in tags]
         gameinfos = self.cursor.execute('''
             SELECT game.id, game.title, game.year, franchise.name,
             game.vote, game.priority, game.img, game.note

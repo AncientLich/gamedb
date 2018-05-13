@@ -80,13 +80,11 @@ class GButton(QPushButton):
         painter.drawText(rect, Qt.AlignCenter, str(self.priority))
         painter.setPen(pen)
     
-    '''
     def _setGameImage(self, imgtext):
-        if imgtext is None:
+        if imgtext is None or imgtext == '':
             self.pcx = None
         else:
             self.pcx = QPixmap(imgtext)
-    '''
     
     def setNull(self):
         self.xid = 0
@@ -104,7 +102,7 @@ class GButton(QPushButton):
         self.vote = vote
         self.isFranchise = False
         self.priority = priority
-        self.pcx = pcx
+        self.pcx = self._setGameImage(pcx)
         self.setVisible(True)
         self.update()
     
@@ -114,7 +112,7 @@ class GButton(QPushButton):
         self.vote = None
         self.isFranchise = True
         self.priority = None
-        self.pcx = pcx
+        self.pcx = self._setGameImage(pcx)
         self.setVisible(True)
         self.update()
 
