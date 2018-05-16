@@ -661,6 +661,9 @@
             <height>30</height>
            </size>
           </property>
+          <property name="text">
+           <string>1</string>
+          </property>
          </widget>
         </item>
         <item>

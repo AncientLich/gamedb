@@ -218,9 +218,9 @@ class TestGameDB(unittest.TestCase):
         # -------------------------------------------------
         query, values = self.gamedb._fgquery(
             title='BloodBorne', 
-            tag=['indie', 'adventure'],
-            platform=['ps4', 'win', 'linux'],
-            store=['cd', 'psn', 'steam', 'gog'],
+            tags=['indie', 'adventure'],
+            platforms=['ps4', 'win', 'linux'],
+            stores=['cd', 'psn', 'steam', 'gog'],
             franchise="Starve",
             page=3
         )
@@ -317,14 +317,14 @@ class TestGameDB(unittest.TestCase):
         self.add_csv_games()
         bb = self.gamedb.filter_games(
             title='BloodBorne',
-            tag=['adventure'],
-            store=['psn'],
-            platform=['ps4']
+            tags=['adventure'],
+            stores=['psn'],
+            platforms=['ps4']
         )
         ds = self.gamedb.filter_games(
             title='Starve',
-            store=['steam'],
-            platform=['linux']
+            stores=['steam'],
+            platforms=['linux']
         )
         ds2 = self.gamedb.filter_games(
             franchise='starVe'

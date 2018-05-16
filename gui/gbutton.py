@@ -3,12 +3,16 @@ from PySide.QtGui import QPainter
 from PySide.QtGui import QPixmap
 from PySide.QtCore import QRect
 from PySide.QtCore import Qt
+from PySide.QtCore import SIGNAL
+from gui.gamedlg import GameDlg
+from gamedb.gamedb import GameDB
+from gamedb.gameview import GameView
 
 
 
 class GButton(QPushButton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent):
+        super().__init__(parent)
         self.setNull()
     
     def paintEvent(self, ev):
@@ -82,11 +86,11 @@ class GButton(QPushButton):
     
     def _setGameImage(self, imgtext):
         if imgtext is None or imgtext == '':
-            self.pcx = None
-        else:
-            self.pcx = QPixmap(imgtext)
+            return None
+        return QPixmap('img/{}'.format(imgtext))
     
     def setNull(self):
+        self.gamedb = None
         self.xid = 0
         self.title = ""
         self.vote = None
@@ -96,7 +100,8 @@ class GButton(QPushButton):
         self.setVisible(False)
         self.update()
     
-    def setGame(self, xid, title, vote, priority, pcx):
+    def setGame(self, gamedb, xid, title, vote, priority, pcx):
+        self.gamedb = gamedb
         self.xid = xid
         self.title = title
         self.vote = vote
@@ -106,7 +111,8 @@ class GButton(QPushButton):
         self.setVisible(True)
         self.update()
     
-    def setFranchise(self, xid, title, pcx):
+    def setFranchise(self, gamedb, xid, title, pcx):
+        self.gamedb = gamedb
         self.xid = xid
         self.title = title
         self.vote = None

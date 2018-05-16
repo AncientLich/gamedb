@@ -292,7 +292,7 @@ class GameDB:
     # calculate and return query, values for GameDB.filter_games
     def _fgquery(self, *, title=None, tags=None, platforms=None,
                      stores=None, franchise=None, page=1):
-        args = [title, tag, platform, store, franchise]
+        args = [title, tags, platforms, stores, franchise]
         query = 'SELECT id, title, vote, priority, img FROM game'
         query_segments = []
         if not all(var is None for var in args):
@@ -300,9 +300,9 @@ class GameDB:
         injoins = {}
         values = []
         for table, relation, op, data in [
-                   ('tag', 'gametag', '=', tag),
-                   ('platform', 'gamesplat', '=', platform),
-                   ('store', 'gamesplat', '=', store)]:
+                   ('tag', 'gametag', '=', tags),
+                   ('platform', 'gamesplat', '=', platforms),
+                   ('store', 'gamesplat', '=', stores)]:
             if data is None:
                 continue
             injoin_candidate = _FilterGamesJoinMMR(table, relation, op, data)
@@ -383,8 +383,8 @@ class GameDB:
             SELECT store.{}, platform.{}, gamesplat.lang, gamesplat.link, 
             subscription.{}, subscription.d, subscription.m, subscription.y
             FROM gamesplat
+            INNER JOIN store ON store.id = gamesplat.storeid
             INNER JOIN platform ON platform.id = gamesplat.platformid
-            INNER JOIN store ON store.id = gamesplat.platformid
             LEFT JOIN subscription ON subscription.id = gamesplat.subscriptionid
             WHERE gamesplat.gameid = ?'''.format(view, view, view), (gameid,))
         storeplats = storeplats.fetchall()
