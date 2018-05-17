@@ -16,7 +16,27 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,9">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_3" stretch="3,4,1,3">
+     <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,3,4,1,3">
+      <item>
+       <widget class="QLabel" name="labsort">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Sort by...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="sort">
+        <property name="currentIndex">
+         <number>-1</number>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QGroupBox" name="box_hardware">
         <property name="title">

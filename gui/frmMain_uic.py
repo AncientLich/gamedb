@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'frmMain.ui'
 #
-# Created: Tue May 15 19:58:45 2018
+# Created: Thu May 17 19:13:12 2018
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -19,6 +19,16 @@ class Ui_frmMainDLG(object):
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.verticalLayout_3 = QtGui.QVBoxLayout()
         self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.labsort = QtGui.QLabel(self.centralwidget)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.labsort.setFont(font)
+        self.labsort.setObjectName("labsort")
+        self.verticalLayout_3.addWidget(self.labsort)
+        self.sort = QtGui.QComboBox(self.centralwidget)
+        self.sort.setObjectName("sort")
+        self.verticalLayout_3.addWidget(self.sort)
         self.box_hardware = QtGui.QGroupBox(self.centralwidget)
         self.box_hardware.setObjectName("box_hardware")
         self.verticalLayout = QtGui.QVBoxLayout(self.box_hardware)
@@ -99,10 +109,10 @@ class Ui_frmMainDLG(object):
         self.verticalLayout_5.setStretch(2, 2)
         self.verticalLayout_5.setStretch(3, 3)
         self.verticalLayout_3.addWidget(self.box_display)
-        self.verticalLayout_3.setStretch(0, 3)
-        self.verticalLayout_3.setStretch(1, 4)
-        self.verticalLayout_3.setStretch(2, 1)
-        self.verticalLayout_3.setStretch(3, 3)
+        self.verticalLayout_3.setStretch(2, 3)
+        self.verticalLayout_3.setStretch(3, 4)
+        self.verticalLayout_3.setStretch(4, 1)
+        self.verticalLayout_3.setStretch(5, 3)
         self.horizontalLayout_4.addLayout(self.verticalLayout_3)
         self.verticalLayout_4 = QtGui.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
@@ -284,10 +294,12 @@ class Ui_frmMainDLG(object):
         frmMainDLG.setStatusBar(self.statusbar)
 
         self.retranslateUi(frmMainDLG)
+        self.sort.setCurrentIndex(-1)
         QtCore.QMetaObject.connectSlotsByName(frmMainDLG)
 
     def retranslateUi(self, frmMainDLG):
         frmMainDLG.setWindowTitle(QtGui.QApplication.translate("frmMainDLG", "MainWindow", None, QtGui.QApplication.UnicodeUTF8))
+        self.labsort.setText(QtGui.QApplication.translate("frmMainDLG", "Sort by...", None, QtGui.QApplication.UnicodeUTF8))
         self.box_hardware.setTitle(QtGui.QApplication.translate("frmMainDLG", "Hardware", None, QtGui.QApplication.UnicodeUTF8))
         self.pc.setText(QtGui.QApplication.translate("frmMainDLG", "PC", None, QtGui.QApplication.UnicodeUTF8))
         self.btnPcplat.setText(QtGui.QApplication.translate("frmMainDLG", "...", None, QtGui.QApplication.UnicodeUTF8))

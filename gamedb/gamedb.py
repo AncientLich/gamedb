@@ -208,6 +208,7 @@ class GameDB:
             'INSERT OR IGNORE INTO gamesplat VALUES(?,?,?, ?,?,?)',
             (gameid, storeid, platformid, lang, link, subscriptionid)
         )
+        self.conn.commit()
     
     # internal function: this will add an entry to the relational table
     # 'gametag'
@@ -217,6 +218,7 @@ class GameDB:
             'INSERT OR IGNORE INTO gametag VALUES(?,?)',
             (gameid, tagid)
         )
+        self.conn.commit()
     
     # internal function: this will return None or an id (int value)
     # this function should never be used outside GameDB class
@@ -291,7 +293,7 @@ class GameDB:
     
     # calculate and return query, values for GameDB.filter_games
     def _fgquery(self, *, title=None, tags=None, platforms=None,
-                     stores=None, franchise=None, page=1):
+                     stores=None, franchise=None, page=1, sortby='title'):
         args = [title, tags, platforms, stores, franchise]
         query = 'SELECT id, title, vote, priority, img FROM game'
         query_segments = []
@@ -327,12 +329,12 @@ class GameDB:
             query_segments.append( 'id IN\n{}'.format(str(j)) )
             values += j.values
         query += '\nAND '.join(query_segments)
-        query += '\nORDER BY title LIMIT 30{}'.format(offset)
+        query += '\nORDER BY {} LIMIT 30{}'.format(sortby, offset)
         query = query.strip()
         return (query, values)
     
     def filter_games(self, *, title=None, tags=None, platforms=None,
-                     stores=None, franchise=None, page=1):
+                     stores=None, franchise=None, page=1, sortby='title'):
         '''return a filtered list of games depending on filters
         
         Every parameter is a filter that can be asked or not by user
@@ -356,9 +358,16 @@ class GameDB:
         (*) Must be a list even if only one item must be checked. So you need
         to use a list of one element only if you need to search only one item.
         '''
+        if sortby not in ('title', 'priority', 'vote'):
+            raise ValueError(
+                'sortby can be only "title", "priority" or "vote"'
+            )
+        elif sortby != 'title':
+            sortby += ' DESC'
         query, values = self._fgquery(
                 title=title, tags=tags, platforms=platforms,
-                stores=stores, franchise=franchise, page=page
+                stores=stores, franchise=franchise, page=page,
+                sortby=sortby
         )
         result = self.cursor.execute(query, values)
         result = result.fetchall()
