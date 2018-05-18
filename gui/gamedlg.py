@@ -52,7 +52,6 @@ class GameDlg(QDialog):
         self.ui.priority.setText(str(self.game.priority))
         self.ui.note.setText(self.game.note)
         self.cleanBtns()
-        print(str(len(self.game.storeplats)))
         for index, storeplat in enumerate(self.game.storeplats):
             try:
                 btn = self.getBtn(index +1)
