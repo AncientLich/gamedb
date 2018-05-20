@@ -231,7 +231,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QPushButton" name="brnSearch">
+         <widget class="QPushButton" name="btnSearch">
           <property name="text">
            <string>Search...</string>
           </property>

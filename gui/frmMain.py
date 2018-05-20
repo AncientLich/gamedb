@@ -7,6 +7,7 @@ from gamedb.gamedb import GameDB
 from gui.gamedlg import GameDlg
 from gui.pcosdlg import PcOsDlg
 from functools import partial
+import re
 
 class frmMain(QMainWindow):
     def __init__(self):
@@ -39,6 +40,7 @@ class frmMain(QMainWindow):
         self.ui.btnPrev.clicked.connect(lambda: self.slotPageChanged(-1))
         self.ui.btnNext.clicked.connect(lambda: self.slotPageChanged(1))
         self.ui.page.returnPressed.connect(lambda: self.slotPageChanged(0))
+        self.ui.btnSearch.clicked.connect(self.exec_searchbar)
         self.showResult()
         self.ui.showFranchises.setEnabled(False)
         
@@ -101,6 +103,63 @@ class frmMain(QMainWindow):
             if page == totpages:
                 self.ui.btnNext.setEnabled(False)
         self.showResult(reset_page1=False)
+    
+    '''
+    # esb = exec_searchbar -> this function is used by exec_searchbar
+    def _esb_assign(self, value, op='>='):
+        try:
+            value = (op, int(value))
+        except ValueError:
+            value = None
+        return value
+    '''
+    
+    def exec_searchbar(self):
+        searchtxt = self.ui.searchbar.text()
+        tags = []
+        priority = None
+        vote = None
+        # ------
+        # syntax 1: tag/mytag
+        # ------
+        # rx = r'((?:tag)|(?:pri(?:ority)?)|(?:vote))\/(\S+)'
+        rx = r'tag\/(\S+)'
+        m = re.search(rx, searchtxt)
+        '''
+        while m:
+            searchtxt = searchtxt.replace(m.group(0), '')
+            if m.group(1) == 'tag':
+                tags.append(m.group(2))
+            elif m.group(1) in ('pri', 'priority'):
+                priority = self._esb_assign(m.group(2))
+            else:
+                vote = self._esb_assign(m.group(2))
+            m = re.search(rx, searchtxt)
+        '''
+        while m:
+            searchtxt = searchtxt.replace(m.group(0), '')
+            tags.append(m.group(1))
+            m = re.search(rx, searchtxt)
+        # ------
+        # syntax 2: tag=[tag1, tag2, tag3]
+        # ------
+        rx = r'tag\=\[(.*?)\]'
+        m = re.search(rx, searchtxt)
+        if m:
+            tags = m.group(1).split(',')
+            searchtxt = searchtxt.replace(m.group(0), '')
+        for index, tag in enumerate(tags):
+            tags[index] = tag.strip()
+        # ------
+        # the remaining part of search should be used for title search
+        # ------
+        searchtxt = searchtxt.strip()
+        title = None
+        if len(searchtxt) > 0:
+            title = searchtxt
+        self.game_title = title
+        self.filter_tags = tags        
+        self.showResult()
     
     def showResult(self, *, reset_page1=True):
         if reset_page1:

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'frmMain.ui'
 #
-# Created: Sun May 20 10:35:09 2018
+# Created: Sun May 20 16:59:37 2018
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -118,9 +118,9 @@ class Ui_frmMainDLG(object):
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.horizontalLayout_3 = QtGui.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.brnSearch = QtGui.QPushButton(self.centralwidget)
-        self.brnSearch.setObjectName("brnSearch")
-        self.horizontalLayout_3.addWidget(self.brnSearch)
+        self.btnSearch = QtGui.QPushButton(self.centralwidget)
+        self.btnSearch.setObjectName("btnSearch")
+        self.horizontalLayout_3.addWidget(self.btnSearch)
         self.searchbar = QtGui.QLineEdit(self.centralwidget)
         self.searchbar.setMaximumSize(QtCore.QSize(16777215, 30))
         self.searchbar.setObjectName("searchbar")
@@ -318,7 +318,7 @@ class Ui_frmMainDLG(object):
         self.box_display.setTitle(QtGui.QApplication.translate("frmMainDLG", "Show by...", None, QtGui.QApplication.UnicodeUTF8))
         self.showGames.setText(QtGui.QApplication.translate("frmMainDLG", "Game", None, QtGui.QApplication.UnicodeUTF8))
         self.showFranchises.setText(QtGui.QApplication.translate("frmMainDLG", "Franchise", None, QtGui.QApplication.UnicodeUTF8))
-        self.brnSearch.setText(QtGui.QApplication.translate("frmMainDLG", "Search...", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnSearch.setText(QtGui.QApplication.translate("frmMainDLG", "Search...", None, QtGui.QApplication.UnicodeUTF8))
         self.b23.setText(QtGui.QApplication.translate("frmMainDLG", "PushButton", None, QtGui.QApplication.UnicodeUTF8))
         self.b22.setText(QtGui.QApplication.translate("frmMainDLG", "PushButton", None, QtGui.QApplication.UnicodeUTF8))
         self.b28.setText(QtGui.QApplication.translate("frmMainDLG", "PushButton", None, QtGui.QApplication.UnicodeUTF8))
