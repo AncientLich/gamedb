@@ -63,7 +63,7 @@ class frmMain(QMainWindow):
             self.ui.pc.setCheckState(Qt.PartiallyChecked)
             # the following line will force refresh in PartiallyChecked state
             # this means that, if previous checkstate was Checked or Unchecked
-            # than the result is refreshed twice
+            # than the result will be refreshed twice
             self.showResult()
         elif all(plats):
             self.ui.pc.setCheckState(Qt.Checked)

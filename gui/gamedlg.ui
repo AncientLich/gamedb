@@ -17,7 +17,7 @@
    <item>
     <layout class="QHBoxLayout" name="layout_img" stretch="8,1,3">
      <item>
-      <widget class="QGraphicsView" name="picture"/>
+      <widget class="ImgButton" name="picture"/>
      </item>
      <item>
       <spacer name="horizontalSpacer_2">
@@ -162,7 +162,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>-123</y>
+          <y>0</y>
           <width>327</width>
           <height>472</height>
          </rect>
@@ -371,6 +371,11 @@
    <class>SplatButton</class>
    <extends>QPushButton</extends>
    <header location="global">gui/splatbtn.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ImgButton</class>
+   <extends>QPushButton</extends>
+   <header location="global">gui/imgbutton.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

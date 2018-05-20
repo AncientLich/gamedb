@@ -28,19 +28,7 @@ class GameDlg(QDialog):
     
     def xset(self, game):
         self.game = game
-        self.scene = QGraphicsScene()
-        self.scene.setSceneRect(0,0,self.ui.picture.width(), 
-                                self.ui.picture.height())
-        
-        pixmap = QPixmap('img/{}'.format(self.game.img))
-        pixmap = pixmap.scaled(self.scene.width(), 
-                               self.scene.height(),
-                               Qt.KeepAspectRatio,
-                               Qt.SmoothTransformation)
-        item = QGraphicsPixmapItem(pixmap)
-        item.setOffset(0,0)
-        self.scene.addItem(item)
-        self.ui.picture.setScene(self.scene)
+        self.ui.picture.setPicture(self.game.img)
         self.ui.show_tags.clear()
         for tag in self.game.tags:
             self.ui.show_tags.addItem(tag)

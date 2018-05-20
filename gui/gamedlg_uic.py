@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gamedlg.ui'
 #
-# Created: Wed May 16 23:34:22 2018
+# Created: Sun May 20 15:55:43 2018
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,7 +17,7 @@ class Ui_GameDlgUI(object):
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.layout_img = QtGui.QHBoxLayout()
         self.layout_img.setObjectName("layout_img")
-        self.picture = QtGui.QGraphicsView(GameDlgUI)
+        self.picture = ImgButton(GameDlgUI)
         self.picture.setObjectName("picture")
         self.layout_img.addWidget(self.picture)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -103,7 +103,7 @@ class Ui_GameDlgUI(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, -123, 327, 472))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 327, 472))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout = QtGui.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -193,3 +193,4 @@ class Ui_GameDlgUI(object):
         self.cancel.setText(QtGui.QApplication.translate("GameDlgUI", "Cancel", None, QtGui.QApplication.UnicodeUTF8))
 
 from gui.splatbtn import SplatButton
+from gui.imgbutton import ImgButton
