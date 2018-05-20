@@ -315,23 +315,27 @@ class TestGameDB(unittest.TestCase):
     
     def test_filter_games(self):
         self.add_csv_games()
-        bb = self.gamedb.filter_games(
+        bb, discard = self.gamedb.filter_games(
             title='BloodBorne',
             tags=['adventure'],
             stores=['psn'],
             platforms=['ps4']
         )
-        ds = self.gamedb.filter_games(
+        ds, discard = self.gamedb.filter_games(
             title='Starve',
             stores=['steam'],
             platforms=['linux']
         )
-        ds2 = self.gamedb.filter_games(
+        ds2, discard = self.gamedb.filter_games(
             franchise='starVe'
         )
         self.assertEqual(ds, ds2)
         self.assertEqual(ds, [(2, "Don’t Starve", 79, 0, 'dont_starve.png')])
         self.assertEqual(bb, [(1, 'Bloodborne', 92, 8, 'bloodborne.png')])
+        result, count = self.gamedb.filter_games(
+            count_total=True
+        )
+        self.assertEqual(count, 2)
     
     
     def test_viewgame(self):

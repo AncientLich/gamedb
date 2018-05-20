@@ -1,5 +1,6 @@
 from gui.frmMain_uic import Ui_frmMainDLG
 from PySide.QtGui import QMainWindow
+from PySide.QtGui import QIntValidator
 from PySide.QtCore import SIGNAL
 from PySide.QtCore import Qt
 from gamedb.gamedb import GameDB
@@ -35,6 +36,9 @@ class frmMain(QMainWindow):
             btn = getattr(self.ui, check)
             btn.stateChanged.connect(lambda x: self.showResult())
         self.ui.pc.stateChanged.connect(self.slotPc)
+        self.ui.btnPrev.clicked.connect(lambda: self.slotPageChanged(-1))
+        self.ui.btnNext.clicked.connect(lambda: self.slotPageChanged(1))
+        self.ui.page.returnPressed.connect(lambda: self.slotPageChanged(0))
         self.showResult()
         self.ui.showFranchises.setEnabled(False)
         
@@ -84,7 +88,24 @@ class frmMain(QMainWindow):
         # if, instead, self.ui.pc is partially checked, no changes 
         self.showResult()
     
-    def showResult(self):
+    def slotPageChanged(self, adder):
+        if adder != 0:
+            self.ui.btnPrev.setEnabled(True)
+            self.ui.btnNext.setEnabled(True)
+            totpages = int(self.ui.totalPages.text())
+            page = int(self.ui.page.text())
+            page += adder
+            self.ui.page.setText(str(page))
+            if page == 1:
+                self.ui.btnPrev.setEnabled(False)
+            if page == totpages:
+                self.ui.btnNext.setEnabled(False)
+        self.showResult(reset_page1=False)
+    
+    def showResult(self, *, reset_page1=True):
+        if reset_page1:
+            self.ui.page.setText('1')
+            self.ui.btnPrev.setEnabled(False)
         if self.ui.showFranchises.isChecked():
             # todo
             return None
@@ -121,16 +142,17 @@ class frmMain(QMainWindow):
             platforms = None
         if len(franchise.strip()) == 0:
             franchise = None
-        results = self.gamedb.filter_games(
+        results, count = self.gamedb.filter_games(
             title = self.game_title,
             tags = self.filter_tags,
             platforms = platforms,
             stores = stores,
             franchise = franchise,
             sortby = self.ui.sort.currentText(),
-            page = int(self.ui.page.text())
+            page = int(self.ui.page.text()),
+            # calculate count_total when pagnum was reset to 1 (new search)
+            count_total = reset_page1
         )
-        # results = self.gamedb.filter_games()
         self.cleanBtns()
         for index, result in enumerate(results):
             try:
@@ -138,3 +160,17 @@ class frmMain(QMainWindow):
             except ValueError:
                 break
             btn.setGame(self.gamedb, *result)
+        # if reset_page1 -> calculate the amount of total pages
+        if not reset_page1:
+            return None
+        # updating total_page label
+        totpages = 1 + int(count / 30)
+        if count % 30 == 0 and count != 0:
+            totpages -= 1
+        self.ui.totalPages.setText(str(totpages))
+        # disabling "next page" button if total pages are 1
+        if totpages == 1:
+            self.ui.btnNext.setEnabled(False)
+        # updating self.ui.page Validator to accept from 1 to total_pages
+        validator = QIntValidator(1, totpages)
+        self.ui.page.setValidator(validator)

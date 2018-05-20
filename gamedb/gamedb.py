@@ -334,7 +334,8 @@ class GameDB:
         return (query, values)
     
     def filter_games(self, *, title=None, tags=None, platforms=None,
-                     stores=None, franchise=None, page=1, sortby='title'):
+                     stores=None, franchise=None, page=1, sortby='title',
+                     count_total=False):
         '''return a filtered list of games depending on filters
         
         Every parameter is a filter that can be asked or not by user
@@ -371,7 +372,14 @@ class GameDB:
         )
         result = self.cursor.execute(query, values)
         result = result.fetchall()
-        return result
+        if not count_total:
+            return (result, None)
+        query2 = re.sub(r'ORDER BY.*', '', query)
+        query2 = 'SELECT count(*) FROM ({})'.format(query2)
+        count = self.cursor.execute(query2, values)
+        count = count.fetchall()
+        count = count[0][0]
+        return (result, count)
     
     def gameview(self, gameid, *, view='name'):
         '''This function will return details for a single game (GameView)
