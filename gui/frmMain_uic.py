@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'frmMain.ui'
 #
-# Created: Sun May 20 16:59:37 2018
+# Created: Mon May 21 22:27:00 2018
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -80,10 +80,10 @@ class Ui_frmMainDLG(object):
         self.ps_store.setChecked(False)
         self.ps_store.setObjectName("ps_store")
         self.verticalLayout_2.addWidget(self.ps_store)
-        self.phisical = QtGui.QCheckBox(self.box_store)
-        self.phisical.setChecked(False)
-        self.phisical.setObjectName("phisical")
-        self.verticalLayout_2.addWidget(self.phisical)
+        self.physical = QtGui.QCheckBox(self.box_store)
+        self.physical.setChecked(False)
+        self.physical.setObjectName("physical")
+        self.verticalLayout_2.addWidget(self.physical)
         self.verticalLayout_3.addWidget(self.box_store)
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_3.addItem(spacerItem)
@@ -130,7 +130,7 @@ class Ui_frmMainDLG(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.gameArea = QtGui.QWidget()
-        self.gameArea.setGeometry(QtCore.QRect(0, 0, 1068, 1068))
+        self.gameArea.setGeometry(QtCore.QRect(0, 0, 1065, 1068))
         self.gameArea.setObjectName("gameArea")
         self.gridLayout = QtGui.QGridLayout(self.gameArea)
         self.gridLayout.setObjectName("gridLayout")
@@ -314,7 +314,7 @@ class Ui_frmMainDLG(object):
         self.gog.setText(QtGui.QApplication.translate("frmMainDLG", "GOG", None, QtGui.QApplication.UnicodeUTF8))
         self.uplay.setText(QtGui.QApplication.translate("frmMainDLG", "Uplay", None, QtGui.QApplication.UnicodeUTF8))
         self.ps_store.setText(QtGui.QApplication.translate("frmMainDLG", "PS store", None, QtGui.QApplication.UnicodeUTF8))
-        self.phisical.setText(QtGui.QApplication.translate("frmMainDLG", "<phisical>", None, QtGui.QApplication.UnicodeUTF8))
+        self.physical.setText(QtGui.QApplication.translate("frmMainDLG", "<physical>", None, QtGui.QApplication.UnicodeUTF8))
         self.box_display.setTitle(QtGui.QApplication.translate("frmMainDLG", "Show by...", None, QtGui.QApplication.UnicodeUTF8))
         self.showGames.setText(QtGui.QApplication.translate("frmMainDLG", "Game", None, QtGui.QApplication.UnicodeUTF8))
         self.showFranchises.setText(QtGui.QApplication.translate("frmMainDLG", "Franchise", None, QtGui.QApplication.UnicodeUTF8))

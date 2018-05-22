@@ -33,7 +33,7 @@ class frmMain(QMainWindow):
             btn.clicked.connect(partial(self.callGameViewer, i))
         self.ui.sort.currentIndexChanged.connect(lambda x: self.showResult())
         for check in ('ps4', 'ps3', 'ps_vita', 'steam', 'gog', 'uplay',
-                      'ps_store', 'phisical'):
+                      'ps_store', 'physical'):
             btn = getattr(self.ui, check)
             btn.stateChanged.connect(lambda x: self.showResult())
         self.ui.pc.stateChanged.connect(self.slotPc)
@@ -169,31 +169,20 @@ class frmMain(QMainWindow):
             # todo
             return None
         # most common case: Show Games
-        stores = [
-            store_name for store_name, store in 
-            (
-                ('steam', self.ui.steam), ('gog', self.ui.gog),
-                ('uplay', self.ui.uplay), ('psn', self.ui.ps_store)
-            )  if store.isChecked()
-        ]
-        if self.ui.phisical.isChecked():
+        strs = [('steam', self.ui.steam), ('gog', self.ui.gog),
+                ('uplay', self.ui.uplay), ('psn', self.ui.ps_store)]
+        stores = [store_name for store_name, store in strs 
+                  if store.isChecked()]
+        if self.ui.physical.isChecked():
             stores.extend(['cd', 'hd'])
-        platforms = [
-            platname for platname, platform in
-            (
-                ('ps4', self.ui.ps4), ('ps3', self.ui.ps3),
-                ('psvita', self.ui.ps_vita)
-            )  if platform.isChecked()
-        ]
-        platforms.extend(
-            [ 
-                platname for platname, platform in
-                (
-                    ('win', self.platform_win), ('mac', self.platform_mac),
-                    ('linux', self.platform_linux),
-                )  if platform
-            ]
-        )
+        plats = [('ps4', self.ui.ps4), ('ps3', self.ui.ps3),
+                 ('psvita', self.ui.ps_vita)]
+        platforms = [platname for platname, platform in plats
+                     if platform.isChecked()]
+        plats = [('win', self.platform_win), ('mac', self.platform_mac),
+                 ('linux', self.platform_linux)]
+        platforms.extend([platname for platname, platform in plats
+                          if platform])
         franchise = self.ui.franchise.text()
         if stores == []:
             stores = None

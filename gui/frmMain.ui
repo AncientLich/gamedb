@@ -153,9 +153,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="phisical">
+          <widget class="QCheckBox" name="physical">
            <property name="text">
-            <string>&lt;phisical&gt;</string>
+            <string>&lt;physical&gt;</string>
            </property>
            <property name="checked">
             <bool>false</bool>
@@ -259,7 +259,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>1068</width>
+           <width>1065</width>
            <height>1068</height>
           </rect>
          </property>
