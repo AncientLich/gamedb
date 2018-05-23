@@ -7,10 +7,10 @@ digraph machine02 {
       label="{GAME|*ID (int)\ntitle (text)\nyear (int)\nfranchise (ref)\nvote (int)\npriority (int)\nimg (text)\nnote(text)}"
    ]
    platform [
-      label="{PLATFORM|*ID(int)\nname (text)\nicon (text)\ndevice (text)| es. ps4, ps3, win, linux, mac, android|identifica quindi un sistema operativo\nassociabile univocamente \nad un dato device\n(device=ps, pc, cell}"
+      label="{PLATFORM|*ID(int)\nname (text)\nicon (text)\nsplatgroupid (ref)| es. ps4, ps3, win, linux, mac, android|identifica quindi un sistema operativo\nassociabile univocamente \nad un dato device\n(device=ps, pc, cell}"
    ]
    store [
-      label="{STORE|*ID (int)\nname (text)\nicon (text)| es. psn, steam, gog}"
+      label="{STORE|*ID (int)\nname (text)\nicon (text)\nsplatgroupid (ref)| es. psn, steam, gog}"
    ]
    tag [
       label="{TAG|*ID (int)\nname (text)}"
@@ -32,8 +32,15 @@ digraph machine02 {
    franchise [
        label="{FRANCHISE|*ID (int)\nname (text)\nimg (text)|es. Assassin's Creed}"
    ]
+
+   splatgroup [
+       label="{splatgroup|*ID (int)\nname (text)|Per raggruppare store o platform\n(es. PC raggruppa win/lin/mac)}"
+   ]
+
    
    {rank=min subscription}
+   {rank=same splatgroup franchise}
+   {rank=same tag game store platform}
    
    
    gametag ->  game
@@ -43,4 +50,6 @@ digraph machine02 {
    game_splat -> platform
    game_splat -> subscription
    game -> franchise
+   store -> splatgroup
+   platform -> splatgroup 
 } 

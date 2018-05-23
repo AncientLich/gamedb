@@ -103,10 +103,14 @@ class GameDB:
             FOREIGN KEY(franchiseid) REFERENCES franchise(id)
            )''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS platform 
-           (id integer PRIMARY KEY AUTOINCREMENT, name text, device text, 
-            icon text)''')
+           (id integer PRIMARY KEY AUTOINCREMENT, name text,
+            icon text, splatgroupid integer,
+            FOREIGN KEY(splatgroupid) REFERENCES splatgroup(id)
+           )''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS store 
-           (id integer PRIMARY KEY AUTOINCREMENT, name text, icon text)''')
+           (id integer PRIMARY KEY AUTOINCREMENT, name text, 
+            icon text, splatgroupid integer,
+            FOREIGN KEY(splatgroupid) REFERENCES splatgroup(id))''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS gamesplat
            (gameid integer, storeid integer, platformid integer, 
             lang text, link text, subscriptionid integer,
@@ -124,8 +128,8 @@ class GameDB:
             PRIMARY KEY(gameid, tagid))''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS franchise
             (id integer PRIMARY KEY AUTOINCREMENT, name text, img text)''')
-        # self.cursor.execute("PRAGMA foreign_keys=ON")
-        self.conn.commit()
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS splatgroup
+            (id integer PRIMARY KEY AUTOINCREMENT, name text)''')
         # if len(_list_tables) != N: <2>
         #     raise ValueError('database has more tables than expected')
     
@@ -146,9 +150,8 @@ class GameDB:
             "INSERT INTO game VALUES (NULL, ?,?,?, ?,?,?, ?)",
             (title, year, franchise, vote, priority, img, note)
         )
-        self.conn.commit()
     
-    def add_platform(self, name, device, icon=None):
+    def add_platform(self, name, icon=None, group=None):
         '''add a platform (ps4, ps3, linux, win, ...) into 'platform' table
     
         'device' should be 'ps' for all playstations; 
@@ -156,17 +159,15 @@ class GameDB:
         '''
         self.cursor.execute(
             "INSERT INTO platform VALUES (NULL, ?,?,?)",
-            (name, device, icon)
+            (name, icon, group)
         )
-        self.conn.commit()
     
-    def add_store(self, name, icon=None):
+    def add_store(self, name, icon=None, group=None):
         '''add a store (steam, uplay, gog) into 'store' table'''
         self.cursor.execute(
-            "INSERT INTO store VALUES (NULL, ?,?)",
-            (name, icon)
+            "INSERT INTO store VALUES (NULL, ?,?,?)",
+            (name, icon, group)
         )
-        self.conn.commit()
     
     def add_tag(self, name):
         ''' add a tag (example: indie) into the 'tag' table
@@ -176,14 +177,21 @@ class GameDB:
         self.cursor.execute(
             "INSERT INTO tag VALUES (NULL,?)", (name,)
         )
-        self.conn.commit()
+    
+    def add_group(self, name):
+        ''' add a group for store or platform (or both gh) (example: "PC")
+        
+        You must add_group(x) before trying to use a group in stores
+        '''
+        self.cursor.execute(
+            "INSERT INTO splatgroup VALUES (NULL,?)", (name,)
+        )
     
     def add_franchise(self, name, img=None):
         '''add a franchise (example: "Assassin's Creed" for AC games)'''
         self.cursor.execute(
             "INSERT INTO franchise VALUES (NULL,?,?)", (name,img)
         )
-        self.conn.commit()
     
     def add_subscription(self, name, icon, d, m, y):
         '''
@@ -197,7 +205,6 @@ class GameDB:
             "INSERT INTO subscription VALUES (NULL,?,?, ?,?,?)", 
             (name, icon,  d, m, y)
         )
-        self.conn.commit()
     
     # internal function: this will add an entry to the relational table
     # 'gamesplat'
@@ -208,7 +215,6 @@ class GameDB:
             'INSERT OR IGNORE INTO gamesplat VALUES(?,?,?, ?,?,?)',
             (gameid, storeid, platformid, lang, link, subscriptionid)
         )
-        self.conn.commit()
     
     # internal function: this will add an entry to the relational table
     # 'gametag'
@@ -218,7 +224,6 @@ class GameDB:
             'INSERT OR IGNORE INTO gametag VALUES(?,?)',
             (gameid, tagid)
         )
-        self.conn.commit()
     
     # internal function: this will return None or an id (int value)
     # this function should never be used outside GameDB class
@@ -336,24 +341,33 @@ class GameDB:
     def filter_games(self, *, title=None, tags=None, platforms=None,
                      stores=None, franchise=None, page=1, sortby='title',
                      count_total=False):
-        '''return a filtered list of games depending on filters
+        '''return tuple: (filtered list of games, total_games_found)
         
-        Every parameter is a filter that can be asked or not by user
+        Almost every parameter is a filter that can be asked (or not) by user
         title (string): title of game to search
         tags (list): list of tags (*)
         platforms (list): list of platforms (*)
         stores (list): list of stores (*)
         franchise (string): franchise name to search
         page (int): search page (useful when total games listed > 30)
-        All those values (except page) can be None if a filter is NOT asked.
+        count_total (bool): if True the second argument of the returned tuple 
+        value will contain total games found. If false the second argument
+        returned will be None. By default count_total is False
+        All those values (except page and count_total) can be None if a filter 
+        is NOT asked.
         
-        This function will return a list of tuples. Every tuple will contain:
+        The first value returned by this function will be a list of tuples. 
+        Every tuple will contain:
         (id, title, vote, priority, img) where:
         id (integer)        = game ID
         title (string)      = game title
         vote (int/None)     = game metacritic vote (0 to 100)
         priority (int/None) = game priority 'vote' (0 to 10)
         img (string)        = game image file name
+        
+        The second value depends of count_total setting. If count_total is
+        False the second value will be None. Otherwhise it is the number of
+        total games found with that filter
         
         Notes:
         (*) Must be a list even if only one item must be checked. So you need
@@ -420,5 +434,39 @@ class GameDB:
         gameinfos = gameinfos.fetchall()
         return GameView(gameinfos[0], storeplats, tags)
     
-    def todo(self):
-        pass
+    def _upd_group_dict(self, tdict, group, value):
+        # This is a sub-function used by get_grouped_splat
+        # It is used to update a single dict entry
+        if group is None:
+            group = ''
+        if group not in tdict:
+            tdict[group] = [ value ]
+        else:
+            tdict[group].append(value)
+    
+    def get_grouped_splat(self):
+        ''' This function will return (grouped_stores, grouped_platforms)
+        
+        grouped_stores and grouped_platforms are dicts with:
+        key: group_name
+        value: list_of_items.
+        
+        Every item is a tuple representing a store or a platform (stores in
+        grouped_stores; platforms in grouped_platforms). Inside tuple you will
+        have:  id, name, icon
+        '''
+        gstores = {}
+        gplatforms = {}
+        for table, tdict in [('store', gstores), ('platform', gplatforms)]:
+            entries = self.cursor.execute(
+                '''SELECT splatgroup.name, {}.id, {}.name, {}.icon FROM {}
+                LEFT JOIN splatgroup ON splatgroup.id = 
+                {}.splatgroupid'''.format(*[table for x in range(5)])
+            )
+            entries = entries.fetchall()
+            for entry in entries:
+                self._upd_group_dict(tdict, entry[0], entry[1:])
+        return (gstores, gplatforms)
+    
+    def commit(self):
+        self.conn.commit()

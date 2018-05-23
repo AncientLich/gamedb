@@ -53,17 +53,16 @@ class TestFilterGamesJoinMMR(unittest.TestCase):
 
 class TestGameDB(unittest.TestCase):
     def setUp(self):
-        self.gamedb = GameDB('test.db')
+        self.gamedb = GameDB(':memory:')
     
     def tearDown(self):
         self.gamedb.close()
-        os.remove('test.db')
     
     def test_create_tables(self):
         tables = self.gamedb._list_tables()
         self.assertEqual(tables, 
             ['subscription', 'game', 'platform', 'store', 'gamesplat', 
-             'tag', 'gametag','franchise']
+             'tag', 'gametag','franchise','splatgroup']
         )
         
     def test_addgame_base(self):
@@ -79,18 +78,15 @@ class TestGameDB(unittest.TestCase):
         self.assertIs(val, None)
         
     def test_add_platform(self):
-        for b, l in [('ps', ('ps3', 'ps4', 'psvita')), 
-                     ('pc', ('win', 'linux', 'mac'))]:
-            for a in l:
-                self.gamedb.add_platform(a,b)
+        for platform in ('ps3', 'ps4', 'psvita', 'win', 'linux', 'mac'):
+            self.gamedb.add_platform(platform)
         value = self.gamedb.cursor.execute(
-            'SELECT id, name, device FROM platform'
+            'SELECT id, name FROM platform'
         )
         value = value.fetchall()
         self.assertEqual(value, 
-            [(1, 'ps3', 'ps'), (2, 'ps4', 'ps'), 
-             (3, 'psvita', 'ps'), (4, 'win', 'pc'), 
-             (5, 'linux', 'pc'), (6, 'mac', 'pc')]
+            [(1, 'ps3'), (2, 'ps4'), (3, 'psvita'), (4, 'win'), 
+             (5, 'linux'), (6, 'mac')]
         )
     
     def test_add_store(self):
@@ -370,3 +366,57 @@ class TestGameDB(unittest.TestCase):
         self.assertEqual(splat.platform, 'linux')
         self.assertEqual(splat2.store, 'gog')
         self.assertEqual(splat2.platform, 'win')
+    
+    def test_upd_group_dict(self):
+        d = { 'test': [(1, 2, 3)] }
+        self.gamedb._upd_group_dict(d, 'test', ('a', 'b', 'c'))
+        self.gamedb._upd_group_dict(d, None, ('alfa', 'beta', 'gamma'))
+        self.gamedb._upd_group_dict(d, None, ('z', 'z2', 'z3'))
+        self.gamedb._upd_group_dict(d, 'test2', ('e', 'f', 'g'))
+        self.assertEqual(sorted(d.keys()), sorted(['test', 'test2', '']))
+        self.assertEqual(d[''], [('alfa', 'beta', 'gamma'), ('z', 'z2', 'z3')])
+        self.assertEqual(d['test'], [(1, 2, 3), ('a', 'b', 'c')])
+        self.assertEqual(d['test2'], [('e', 'f', 'g')])
+    
+    def check_unpack_splat(self, table, srclist):
+        result = []
+        for item in srclist:
+            value = (
+                self.gamedb._sid(table, 'name', item),
+                item, '{}.png'.format(item)
+            )
+            result.append(value)
+        return result
+    
+    def test_get_grouped_splat(self):
+        self.gamedb.add_group('PC')
+        self.gamedb.add_group('physical')
+        for table, name, groupname in [('store', 'steam', None),
+                ('store', 'gog', None), ('store', 'uplay', None),
+                ('store', 'cd', 'physical'), ('store', 'hd', 'physical'),
+                ('platform', 'linux', 'pc'), ('platform', 'win', 'pc'),
+                ('platform', 'mac', 'pc'), ('platform', 'PS4', None),
+                ('platform', 'PS3', None), ('platform', 'PS Vita', None)]:
+            gid = None
+            if groupname is not None:
+                gid = self.gamedb._sid('splatgroup', 'name', groupname)
+            self.gamedb.cursor.execute(
+                "INSERT INTO {} VALUES (NULL, ?,?,?)".format(table),
+                (name, '{}.png'.format(name), gid)
+            )
+        self.gamedb.commit()
+        grouped_stores, grouped_plats = self.gamedb.get_grouped_splat()
+        self.assertEqual(sorted(grouped_stores.keys()), 
+                         sorted(['', 'physical']))
+        self.assertEqual(sorted(grouped_plats.keys()), sorted(['', 'PC']))
+        self.assertEqual(grouped_stores['physical'], 
+            self.check_unpack_splat('store', ['cd', 'hd']))
+        self.assertEqual(grouped_stores[''], 
+            self.check_unpack_splat('store', ['steam', 'gog', 'uplay']))
+        self.assertEqual(grouped_plats['PC'], 
+            self.check_unpack_splat('platform', ['linux', 'win', 'mac']))
+        self.assertEqual(grouped_plats[''], 
+            self.check_unpack_splat('platform', ['PS4', 'PS3', 'PS Vita']))
+    
+    def test_pass(self):
+        pass
