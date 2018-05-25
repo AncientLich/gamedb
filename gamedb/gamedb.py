@@ -113,7 +113,7 @@ class GameDB:
             FOREIGN KEY(splatgroupid) REFERENCES splatgroup(id))''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS gamesplat
            (gameid integer, storeid integer, platformid integer, 
-            lang text, link text, subscriptionid integer,
+            lang text, link text, subscriptionid integer, isdemo integer,
             FOREIGN KEY(gameid) REFERENCES game(id),
             FOREIGN KEY(storeid) REFERENCES store(id),
             FOREIGN KEY(platformid) REFERENCES platform(id),
@@ -210,10 +210,11 @@ class GameDB:
     # 'gamesplat'
     # see: add_game(); ER graphic
     def _addgamesplat(self, gameid, storeid, platformid, lang='en', link=None, 
-                      subscriptionid=None):
+                      subscriptionid=None, isdemo=False):
         self.cursor.execute(
-            'INSERT OR IGNORE INTO gamesplat VALUES(?,?,?, ?,?,?)',
-            (gameid, storeid, platformid, lang, link, subscriptionid)
+            'INSERT OR IGNORE INTO gamesplat VALUES(?,?,?, ?,?,?, ?)',
+            (gameid, storeid, platformid, lang, link, subscriptionid,
+             int(isdemo))
         )
     
     # internal function: this will add an entry to the relational table
@@ -239,7 +240,8 @@ class GameDB:
             return myval[0][0]
     
     def add_game(self, subscription, priority, title, tag, franchise,
-                    year, vote, img, lang, store, platform, link, note):
+                    year, vote, img, lang, store, platform, link, note, *,
+                    isdemo=False):
         '''
         Add a game from a single csv entry.
         subscription, tag, franchise, store, platform must exists
@@ -281,7 +283,7 @@ class GameDB:
             self._addgame_item(title, year, franchiseid, vote, 
                                priority, img, note)
             gid = self._sid('game', 'title', title)
-        self._addgamesplat(gid, storeid, platid, lang, link, subsid)
+        self._addgamesplat(gid, storeid, platid, lang, link, subsid, isdemo)
         self._addgametag(gid, tagid)
     
     def searchgame(self, title):
