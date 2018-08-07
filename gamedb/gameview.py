@@ -24,11 +24,18 @@ class StorePlat:
         will be ignored). d=day, m=month, y=year (expiration data)
         '''
         (self.store, self.platform, self.lang, self.link,
-            self.subscription, d, m, y) = params
-        if self.subscription is None:
-            self.expiredate = None
-        else:
-            self.expiredate = (d, m, y)
+            self.subscription, d, m, y, self.isdemo) = params
+        self.isdemo = bool(self.isdemo)
+        self.expiredate = None if self.subscription is None else (d, m, y)
+    
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return ((self.store, self.platform, self.lang, self.link,
+                 self.subscription, self.isdemo, self.expiredate) ==
+                (other.store, other.platform, other.lang, other.link,
+                 other.subscription, other.isdemo, other.expiredate))
+
 
 
 '''

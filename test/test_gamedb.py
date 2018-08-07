@@ -6,6 +6,7 @@ from gamedb.gamedb import GameDB
 from gamedb.gamedb import _FilterGamesJoinMMR
 from gamedb.gameview import StorePlat
 from gamedb.gameview import GameView
+import gamedb.gamedberr as gamerr
 
 
 
@@ -64,7 +65,37 @@ class TestGameDB(unittest.TestCase):
             ['subscription', 'game', 'platform', 'store', 'gamesplat', 
              'tag', 'gametag','franchise','splatgroup']
         )
-        
+    
+    # this is not an actual test.
+    # it is used to generate additem_profile.txt wich contains code 
+    # to include manually in gamedb.add_item()
+    def disabled_test_create_additem_profilecheck(self):
+        tables = self.gamedb._list_tables()
+        with open('additem_profile.txt', 'w', encoding='utf-8') as fo:
+            print('profile_check = {', file=fo)
+            for table in tables:
+                values = []
+                cols = self.gamedb.cursor.execute(
+                    'PRAGMA table_info({})'.format(table))
+                cols = cols.fetchall()
+                for _, name, xtype, _, _, _ in cols:
+                    if name.lower() == 'id':
+                        continue
+                    if xtype == 'integer':
+                        values.append((name, 'i'))
+                    else:
+                        values.append((name, 's'))
+                # prints 'table': (('name1', 'type1'), ('name2', 'type2')),
+                # where list of 'namex', 'typex' is extracted from values
+                print(
+                    "'{}': ({}),".format(
+                        table, ', '.join(
+                            ["('{}', '{}')".format(value[0], value[1])
+                             for value in values]
+                    )), file=fo
+                )
+            print('}', file=fo)
+    
     def test_addgame_base(self):
         self.gamedb._addgame_item('Bloodborne')
         val = self.gamedb.searchgame('Bloodborne')
@@ -77,7 +108,7 @@ class TestGameDB(unittest.TestCase):
         val = self.gamedb._sid('game','title', 'Nobun')
         self.assertIs(val, None)
         
-    def test_add_platform(self):
+    def avoid_test_add_platform(self):
         for platform in ('ps3', 'ps4', 'psvita', 'win', 'linux', 'mac'):
             self.gamedb.add_platform(platform)
         value = self.gamedb.cursor.execute(
@@ -89,7 +120,7 @@ class TestGameDB(unittest.TestCase):
              (5, 'linux'), (6, 'mac')]
         )
     
-    def test_add_store(self):
+    def avoid_test_add_store(self):
         for i in ['psn', 'steam', 'gog', 'uplay', 'cd', 'hd']:
             self.gamedb.add_store(i)
         value = self.gamedb.cursor.execute('SELECT id, name from store')
@@ -113,7 +144,7 @@ class TestGameDB(unittest.TestCase):
         self.gamedb.add_tag('survival')
         self.gamedb.add_franchise("Don’t Starve")
         self.gamedb.add_subscription('ps+', 'psplus.png', 11, 4, 2018)
-        with open('test_games.csv', 'r', encoding='utf-8') as fi:
+        with open('test/games01.csv', 'r', encoding='utf-8') as fi:
             for xline in fi:
                 if not first:
                     params = xline.split(',')
@@ -125,7 +156,10 @@ class TestGameDB(unittest.TestCase):
                             params[i] = param.strip()
                             if param == '':
                                 params[i] = None
-                    self.gamedb.add_game(*params)
+                    try:
+                        self.gamedb.add_game(*params)
+                    except gamerr.RelationExistsError:
+                        pass
                 else:
                     first = False
     
@@ -168,6 +202,129 @@ class TestGameDB(unittest.TestCase):
                                                         "Don’t Starve"))
             else:
                 self.assertIs(frid, None)
+    
+    def test_add_game_demo_repl_feature(self):
+        # this test verify if a game, originally "demo", is rigtly edited to
+        # "complete"
+        self.gamedb.add_item('franchise', ("Don't Starve", 'ds.png'))
+        self.gamedb.add_item('tag', ('survival',))
+        self.gamedb.add_item('tag', ('indie',))
+        self.gamedb.add_item('tag', ('co-op',))
+        self.gamedb.add_item('tag', ('action',))
+        self.gamedb.add_item('store', ('steam', 'steam.png', None))
+        self.gamedb.add_item('store', ('psn', 'psn.png', None))
+        self.gamedb.add_item('platform', ('win', 'win.png', None))
+        self.gamedb.add_item('platform', ('linux', 'linux.png', None))
+        self.gamedb.add_item('platform', ('mac', 'mac.png', None))
+        self.gamedb.add_item('platform', ('ps4', 'ps4.png', None))
+        # ---
+        self.gamedb.add_game(None, 0, "Don't Starve Together", 'survival',
+            "Don't Starve", 2016, 83, 'dst.png', 'en', 'steam', 'linux',
+            None, None, isdemo=True)
+        self.gamedb.add_game(None, 0, "Don't Starve Together", 'indie',
+            "Don't Starve", 2016, 83, 'dst.png', 'en', 'steam', 'win',
+            None, None, isdemo=True)
+        self.gamedb.add_game(None, 0, "Don't Starve Together", 'co-op',
+            "Don't Starve", 2016, 83, 'dst.png', 'en', 'steam', 'mac',
+            None, None, isdemo=True)
+        self.gamedb.add_game(None, 0, "Bloodborne", 'action',
+            None, 2015, 83, 'bb.png', 'ita', 'psn', 'ps4',
+            None, None)
+        # ---
+        # this should become 'complete' but other parameters should remain
+        # unchanged:
+        self.gamedb.add_game(None, 100, "Don't Starve Together", 'survival',
+            "Don't Starve", 1800, 100, 'dst.png', 'en', 'steam', 'linux',
+            None, None)
+        # this should not have any effect:
+        self.gamedb.add_game(None, 100, "Don't Starve Together", 'indie',
+            "Don't Starve", 1800, 100, 'dst.png', 'en', 'steam', 'win',
+            None, None, isdemo=True)
+        # and aldo those two should not have any effect:
+        self.gamedb.add_game(None, 100, "Bloodborne", 'action',
+            None, 1800, 100, 'bb.png', 'ita', 'psn', 'ps4',
+            None, None)
+        self.gamedb.add_game(None, 100, "Bloodborne", 'action',
+            None, 1500, 100, 'bb.png', 'ita', 'psn', 'ps4',
+            None, None, isdemo=True)
+        # -------------------------------------
+        # now checking values. We will use 'gameview' wich returns all the
+        # informations from a game
+        game1 = self.gamedb.gameview(1)
+        self.assertEqual(game1.xid, 1)
+        self.assertEqual(game1.title, "Don't Starve Together")
+        self.assertEqual(game1.year, 2016)
+        self.assertEqual(game1.franchise, "Don't Starve")
+        self.assertEqual(game1.priority, 0)
+        self.assertEqual(game1.vote, 83)
+        self.assertEqual(game1.img, 'dst.png')
+        self.assertEqual(sorted(game1.tags),
+            sorted(['survival', 'indie', 'co-op']))
+        check = [
+            StorePlat(
+                ('steam', 'linux', 'en', None,
+            None, 1, 2, 3, False)),
+            StorePlat(
+                ('steam', 'win', 'en', None,
+            None, 1, 2, 3, True)),
+            StorePlat(
+                ('steam', 'mac', 'en', None,
+            None, 1, 2, 3, True))
+        ]
+        self.compare_storeplats(game1.storeplats, check)
+        # ---
+        game2 = self.gamedb.gameview(2)
+        self.assertEqual(game2.xid, 2)
+        self.assertEqual(game2.title, "Bloodborne")
+        self.assertEqual(game2.year, 2015)
+        self.assertIsNone(game2.franchise)
+        self.assertEqual(game2.priority, 0)
+        self.assertEqual(game2.vote, 83)
+        self.assertEqual(game2.img, 'bb.png')
+        self.assertEqual(game2.tags,['action'])
+        check = [StorePlat(
+            ('psn', 'ps4', 'ita', None,
+            None, 1, 2, 3, False))]
+        self.compare_storeplats(game2.storeplats, check)
+    
+    def compare_storeplats(self, splat1_list, splat2_list):
+        ''' DEBUG CODE:
+        with open('debug01.txt', 'w', encoding='utf-8') as fo:
+            for splat_list, lname in ((splat1_list, 'stored'), 
+                                      (splat2_list, 'wanted')):
+                print('###########################################', file=fo)
+                print('##  {}'.format(lname), file=fo)
+                print('###########################################', file=fo)
+                for xid, splat in enumerate(splat_list):
+                    isdemo = 'True' if splat.isdemo is True else 'False'
+                    print('[{}]'.format(xid), file=fo)
+                    print('store = {}\n'
+                        'platform = {}\n'
+                        'lang = {}\n'
+                        'link = {}\n'
+                        'subscription = {}\n'
+                        'isdemo = {}\n'
+                        'expire = '
+                        '{}'.format(splat.store, splat.platform, splat.lang,
+                            str(splat.link), str(splat.subscription),
+                            isdemo, str(splat.expiredate)), file=fo)
+        '''
+        self.assertEqual(len(splat1_list), len(splat2_list))
+        for splat1 in splat1_list:
+            if splat1 not in splat2_list:
+                isdemo = 'True' if splat1.isdemo is True else 'False'
+                self.assertEqual(1,2, "\nElement in storeplat1 list is not "
+                    "not contained in storeplat2.\nDetails of storeplat1:\n"
+                    'store = {}\n'
+                    'platform = {}\n'
+                    'lang = {}\n'
+                    'link = {}\n'
+                    'subscription = {}\n'
+                    'isdemo = {}\n'
+                    'expire = '
+                    '{}'.format(splat1.store, splat1.platform, splat1.lang,
+                        str(splat1.link), str(splat1.subscription),
+                        isdemo, str(splat1.expiredate)))
     
     def test_add_gamesplat(self):
         self.gamedb.add_platform('ps4', 'ps')
@@ -223,8 +380,6 @@ class TestGameDB(unittest.TestCase):
         # we will strip query (removing initial and final spaces) to
         # allow a better verify
         query = query.strip()
-        with open('debugdebug.txt', 'w', encoding='utf-8') as fo:
-            print(query, file=fo)
         # the resulting query will have a sequences of subqueries wich can
         # be placed in a different order since iterating dict.values()
         # does not ensure a fixed order in python < 3.6
@@ -333,7 +488,6 @@ class TestGameDB(unittest.TestCase):
         )
         self.assertEqual(count, 2)
     
-    
     def test_viewgame(self):
         self.add_csv_games()
         game = self.gamedb.gameview(1)
@@ -418,5 +572,56 @@ class TestGameDB(unittest.TestCase):
         self.assertEqual(grouped_plats[''], 
             self.check_unpack_splat('platform', ['PS4', 'PS3', 'PS Vita']))
     
-    def test_pass(self):
-        pass
+    def compare_dicts(self, dict1, dict2):
+        self.assertEqual(len(dict1), len(dict2))
+        for key, value in dict1.items():
+            if key not in dict2:
+                self.assertEqual(1,2, 
+                    'key {} found in dict1 but not in dict2'.format(key))
+            self.assertEqual(dict1[key], dict2[key])
+    
+    def test_add_and_list_items(self):
+        self.gamedb.add_item('group', ('pc',))
+        self.gamedb.add_item('group', ('physical',))
+        self.gamedb.add_item('store', ('steam', 'sys/steam.png', None))
+        self.gamedb.add_item('store', ('cd', 'sys/cd.png', 'physical'))
+        self.gamedb.add_item('store', ('hd', 'sys/hd.png', 'physical'))
+        self.gamedb.add_item('platform', ('linux', 'sys/win.png', 'pc'))
+        self.gamedb.add_item('platform', ('win', 'sys/win.png', 'pc'))
+        self.gamedb.add_item('platform', ('mac', 'sys/mac.png', 'pc'))
+        self.gamedb.add_item('platform', ('ps4', 'sys/ps4.png', None))
+        self.gamedb.commit()
+        self.compare_dicts(
+            self.gamedb.list_items('group'),
+            {'pc': 1, 'physical': 2})
+        self.compare_dicts(
+            self.gamedb.list_items('store'),
+            {'steam': 1, 'cd': 2, 'hd': 3})
+        self.compare_dicts(
+            self.gamedb.list_items('platform'),
+            {'linux': 1, 'win': 2, 'mac': 3, 'ps4': 4})
+    
+    def test_additem_errors(self):
+        with self.assertRaises(gamerr.ItemRequiredError):
+            self.gamedb.add_item('store', ('steam', 'steam.png', 'pc'))
+        with self.assertRaises(gamerr.ItemError) as e:
+            self.gamedb.add_item('store', ('gog', 'gog.png', None, 'useless'))
+            self.assertEqual(str(e),
+                'Too many parameters for table "store". '
+                'Expected 3 parameters but 4 found.')
+        with self.assertRaises(gamerr.ItemError):
+            self.gamedb.add_item('group', ('pc', None))
+        with self.assertRaises(gamerr.ItemError) as e:
+            self.gamedb.add_item('gamesplat', ('gog', 'linux'))
+            self.assertEqual(str(e),
+                'Not enogh parameters for table "gamesplat". '
+                'Expected 7 parameters but 2 found.')
+        self.gamedb.add_item('group', ('pc',))
+        with self.assertRaises(gamerr.ItemExistsError):
+            self.gamedb.add_item('group', ('pc',))
+        with self.assertRaises(gamerr.ItemError) as e:
+            self.gamedb.add_item('store', (None, 'gog.png', None))
+            self.assertEqual(str(e),
+                'Unexpected NULL value: store.name')
+    
+    

@@ -2,6 +2,97 @@ import os
 import re
 import sqlite3
 from gamedb.gameview import GameView
+from gamedb.gamedberr import *
+
+
+#---------------------
+# Generate an ItemExistsError
+#---------------------
+def _item_added_error(gamedb, e, table, params, m):
+    # gamedb: gamedb object
+    # e: original sqlite.IntegrityError exception.
+    # table: sqlite3 table where exception happened.
+    # params: params passed to GameDB that caused the sqlite3 exception.
+    # m: regexp match -> regexp = "UNIQUE constraint failed\: (.*)"
+    # ---------
+    # First we capture from m (regexp match) the values of
+    # table1.colum1, table2.colum2... (storing them in a string)
+    unique_failed = m.group(1)
+    # profile is a dictionary that contains all combinations for 
+    # unique_colums_org related to table that can raise ItemExistsError.
+    # those 'combinations' are stored as tuple:
+    # index 0: unique_costraint_failed message from sqlite3.IntegrityError
+    # index 1: tuple containing the indexes for 'params' related to that
+    #          unique costraint
+    # example: 'tag.name' is the second parameter (index 1) passed with an
+    #          add_item('tagname') becouse add_item will silently add a NULL
+    #          value when trying to add a new tag (autoincremental ID in tag) 
+    profile = {
+        'gametag': ('gametag.gameid, gametag.tagid', (0, 1)),
+        'gamesplat': (
+            'gamesplat.gameid, gamesplat.storeid, gamesplat.platformid',
+            (0, 1, 2)),
+        'tag': ('tag.name', (1,)),
+        'franchise': ('franchise.name', (1,)),
+        'platform': ('platform.name', (1,)),
+        'store': ('store.name', (1,)),
+        'subscription': ('subscription.name', (1,)),
+        'splatgroup': ('splatgroup.name', (1,))
+    }
+    if unique_failed != profile[table][0]:
+        return UnexpectedError(
+            'Found an unexpected (unlisted) sqlite3.IntegrityError with an '
+            '"Unique costraint failed" when trying to generate an '
+            'ItemExistsError exception.\n'
+            'Sqlite original error message was "{}".'
+            'Please open a bug report if you encountered this '
+            'error message.'.format(e.args[0])
+        )
+    # now we get the colums names from profile and put them in a list
+    columns = profile[table][0].split(', ')
+    # and we get parameters we actually need
+    pars = [params[i] for i in profile[table][1]]
+    # we 'hack' values in gametag and gamesplat in order to have game.title, etc
+    # instead of ids
+    if table in ('gametag', 'gamesplat'):
+        columns = ('game.title', 'store.name', 'platform.name')
+        if table == 'gametag':
+            columns = ('game.title', 'tag.name')
+        pars2 = []
+        for column, xid in zip(columns, pars):
+            tab, col = column.split('.')
+            val = gamedb.cursor.execute(
+                'SELECT {} FROM {} WHERE id=?'.format(col, tab),
+                (xid,)
+            )
+            val = val.fetchall()
+            pars2.append(val[0][0])
+        pars = pars2
+    # finally we pair colums, pars in 'values'
+    values = [(x, y) for x, y in zip(columns, pars)]
+    if table in ('gametag', 'gamesplat'):
+        return RelationExistsError(table, values)
+    return ItemExistsError(table, values)
+
+
+
+#---------------------
+# Generate:
+#   - x
+#   - y
+#  from sqlite3.OperationalError
+#---------------------
+def _sqlite_operr(e, table, params):
+    m1 = re.match('table (\S+) has ([0-9]+) columns but ([0-9]+)', e.args[0])
+    if m1:
+        table = m1.group(1)
+        if table == 'splatgroup':
+            table = 'group'
+        return ItemError.fromWrongNumpars(table, int(m1.group(2)), 
+                                          int(m1.group(3)))
+    else:
+        return e
+
 
 
 #---------------------
@@ -82,6 +173,7 @@ class GameDB:
         self.conn = sqlite3.connect(dbname)
         self.cursor = self.conn.cursor()
         self._create_tables()
+        self.tables = self._list_tables()
     
     def close(self):
         '''close database connection'''
@@ -94,21 +186,21 @@ class GameDB:
         # to an existing value or not
         self.cursor.execute("PRAGMA foreign_keys=ON")
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS subscription
-            (id integer PRIMARY KEY AUTOINCREMENT, name text, icon text,
-             d integer, m integer, y integer)''')
+            (id integer PRIMARY KEY AUTOINCREMENT, name text UNIQUE NOT NULL, 
+             icon text, d integer, m integer, y integer)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS game 
-           (id integer PRIMARY KEY AUTOINCREMENT, title text, year integer,
-            franchiseid integer, vote integer, priority integer,
+           (id integer PRIMARY KEY AUTOINCREMENT, title text NOT NULL, 
+            year integer, franchiseid integer, vote integer, priority integer,
             img text, note text,
             FOREIGN KEY(franchiseid) REFERENCES franchise(id)
            )''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS platform 
-           (id integer PRIMARY KEY AUTOINCREMENT, name text,
+           (id integer PRIMARY KEY AUTOINCREMENT, name text UNIQUE NOT NULL,
             icon text, splatgroupid integer,
             FOREIGN KEY(splatgroupid) REFERENCES splatgroup(id)
            )''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS store 
-           (id integer PRIMARY KEY AUTOINCREMENT, name text, 
+           (id integer PRIMARY KEY AUTOINCREMENT, name text UNIQUE NOT NULL, 
             icon text, splatgroupid integer,
             FOREIGN KEY(splatgroupid) REFERENCES splatgroup(id))''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS gamesplat
@@ -120,16 +212,19 @@ class GameDB:
             FOREIGN KEY(subscriptionid) REFERENCES subscription(id),
             PRIMARY KEY(gameid, storeid, platformid))''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS tag 
-            (id integer PRIMARY KEY AUTOINCREMENT, name text)''')
+            (id integer PRIMARY KEY AUTOINCREMENT, 
+             name text UNIQUE NOT NULL)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS gametag
            (gameid integer, tagid integer,
             FOREIGN KEY(gameid) REFERENCES game(id),
             FOREIGN KEY(tagid) REFERENCES tag(id),
             PRIMARY KEY(gameid, tagid))''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS franchise
-            (id integer PRIMARY KEY AUTOINCREMENT, name text, img text)''')
+            (id integer PRIMARY KEY AUTOINCREMENT, 
+            name text UNIQUE NOT NULL, img text)''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS splatgroup
-            (id integer PRIMARY KEY AUTOINCREMENT, name text)''')
+            (id integer PRIMARY KEY AUTOINCREMENT, 
+             name text UNIQUE NOT NULL)''')
         # if len(_list_tables) != N: <2>
         #     raise ValueError('database has more tables than expected')
     
@@ -142,6 +237,117 @@ class GameDB:
         tables = [table[0] for table in tmp] 
         return [table for table in tables if 'sqlite' not in table]
     
+    def list_items(self, table):
+        ''' returns a dictionary where key=item_name, value=item_id '''
+        if table == 'group':
+            table = 'splatgroup'
+        elif table not in self.tables:
+            raise ValueError('invalid table')
+        elif table in ('gamesplat', 'gametag'):
+            raise ValueError(
+                'cannot list items from table "{}", wich is a relation '
+                'table'.format(table))
+        name = 'title' if table == 'game' else 'name'
+        val = self.cursor.execute('SELECT {}, id from {}'.format(name, table))
+        val = dict(val.fetchall())
+        return val
+    
+    def add_item(self, table, params):
+        ''' add a value in a table
+        
+        add_item should not be used directly for tables 'game', 
+        'gametag', 'gamesplat', becouse those tables should be
+        managed by add_game when adding game with relations        
+        '''
+        
+        # s = string; i = integer;
+        # profile_check is generated by test_gamedb.py when function 
+        # disabled_test_create_additem_profilecheck(self)
+        # is renamed removing 'disabled_' from function name
+        # some minor manual fixes were needed for this final result:
+        # (for example store, platform require a groupid integer, but here 
+        #  string will be accepted since the code will convert the string into
+        #  the id)
+        profile_check = {
+            'subscription': (
+                ('name', 's'), ('icon', 's'), 
+                ('d', 'i'), ('m', 'i'), ('y', 'i')),
+            'game': (
+                ('title', 's'), ('year', 'i'), ('franchiseid', 'i'), 
+                ('vote', 'i'), ('priority', 'i'), ('img', 's'), ('note', 's')),
+            'platform': (
+                ('name', 's'), ('icon', 's'), ('splatgroupid', 's')),
+            'store': (
+                ('name', 's'), ('icon', 's'), ('splatgroupid', 's')),
+            'gamesplat': (
+                ('gameid', 'i'), ('storeid', 'i'), ('platformid', 'i'), 
+                ('lang', 's'), ('link', 's'), 
+                ('subscriptionid', 'i'), ('isdemo', 'i')),
+            'tag': (('name', 's'),),
+            'gametag': (('gameid', 'i'), ('tagid', 'i')),
+            'franchise': (('name', 's'), ('img', 's')),
+            'group': (('name', 's'),),
+            'splatgroup': (('name', 's'),)
+        }
+        checks = profile_check[table]
+        # type checks: we will do them only if number of params are right.
+        # Else, we will ignore type check (an error for wrong number of 
+        # parameters will be raised later
+        if len(checks) == len(params):
+            for param, check in zip(params, checks):
+                # we will ignore NULL params. If a None value is passed into a
+                # NON NULL column, an ItemError will be raised later
+                if param is None:
+                    continue
+                # check[1] contains expected type for column ('i' or 's')
+                # check[0] contains the column name
+                if check[1] == 'i' and not isinstance(param, int):
+                    raise ItemError.fromType(
+                        table, check[0], 'int', 'string')
+                elif check[1] == 's' and not isinstance(param, str):
+                    raise ItemError.fromType(
+                        table, check[0], 'string', 'int')
+        sgrp = None
+        if table in ('store', 'platform'):
+            if params[2] is not None:
+                sgrp = self._sid('splatgroup', 'name', params[2])
+                if sgrp is None:
+                    raise ItemRequiredError(table, params[0],
+                                            'group', params[2])
+            if len(params) != 3:
+                raise ItemError.fromWrongNumpars(table, 3, len(params))
+            t1, t2, _ = params
+            params = (None, t1, t2, sgrp)
+        elif table in ('game', 'tag', 'franchise', 
+                       'splatgroup', 'group', 'subscription'):
+            if table == 'group':
+                table = 'splatgroup'
+            params = (None, *params)
+        elif table not in ('gametag', 'gamesplat'):
+            raise UnexpectedError(
+                'insert error: unvalid table: {}'.format(table)
+            )
+        try:
+            self.cursor.execute(
+                "insert INTO {} VALUES ({})".format(
+                    table, ','.join('?' for x in params)
+                ), params
+            )
+        except sqlite3.IntegrityError as e:
+            m1 = re.match(r'UNIQUE constraint failed\: (.*)', 
+                            e.args[0])
+            m2 = re.match(r'NOT NULL constraint failed: (.*)',
+                            e.args[0])
+            if m1:
+                raise _item_added_error(self, e, table, params, m1) from None
+            elif m2:
+                raise ItemError(
+                    'Unexpected NULL value: {}'.format(m2.group(1))
+                ) from None
+            else:
+                raise e from None
+        except sqlite3.OperationalError as e:
+            raise _sqlite_operr(e, table, params) from None
     # internal function: adds an entry into 'game' table
     # see: add_game() function
     def _addgame_item(self, title, year=2000, franchise=None, vote=None, 
@@ -231,9 +437,23 @@ class GameDB:
     def _sid(self, table, param, value):
         if value is None:
             return None
+        if table == 'game' and param == 'name':
+            param = 'title'
         myval = self.cursor.execute(
                 "SELECT id FROM {} WHERE lower({})=?".format(table, param), 
                 (value.lower(),)
+        )
+        myval = myval.fetchall()
+        if myval:
+            return myval[0][0]
+    
+    # internal function: returns a value from id (the opposite of _sid)
+    def _sval(self, table, param, xid):
+        if table == 'game' and param == 'name':
+            param = 'title'
+        myval = self.cursor.execute(
+            'SELECT {} FROM {} WHERE id=?'.format(param, table),
+            (xid,)
         )
         myval = myval.fetchall()
         if myval:
@@ -264,27 +484,55 @@ class GameDB:
         storeid = self._sid('store', 'name', store)
         tagid = self._sid('tag', 'name', tag)
         subsid = self._sid('subscription', 'name', subscription)
+        for table, val, xid in [
+                ('franchise', franchise, franchiseid), 
+                ('platform', platform, platid),
+                ('store', store, storeid),
+                ('tag', tag, tagid),
+                ('subscription', subscription, subsid)]:
+            if xid is None and val is not None:
+                raise ItemRequiredError(
+                    'game', title, table, val)
         for xid, tab, xname in [(platid, 'platform', platform), 
                                 (storeid, 'store', store),
                                 (tagid, 'tag', tag),
                                 (subsid, 'subscription', subscription)]:
             if xid is None and xname is not None:
-                raise ValueError('{} "{}" not found in database'.format(
-                    tab, xname)
-                )
+                raise ItemRequiredError('game', title, tab, xname)
             if tab in ('platform', 'store') and xname is None:
-                raise ValueError(
+                raise GameError(
                     'Unexpected None value for {}\n'
                     'Matched on title {}'.format(tab, title)
                 )
         gid = self._sid('game', 'title', title)
         # we add a game entry in 'game' table only if it still does not exist
         if gid is None:
-            self._addgame_item(title, year, franchiseid, vote, 
-                               priority, img, note)
+            self.add_item('game',
+                (title, year, franchiseid, vote, priority, img, note))
             gid = self._sid('game', 'title', title)
-        self._addgamesplat(gid, storeid, platid, lang, link, subsid, isdemo)
-        self._addgametag(gid, tagid)
+        try:
+            self.add_item('gametag', (gid, tagid))
+        except RelationExistsError:
+            pass
+        try:
+            self.add_item('gamesplat', 
+                (gid, storeid, platid, lang, link, subsid, int(isdemo)))
+        except RelationExistsError:
+            # when gamesplat relation already exists, usually ignore the new
+            # entry. BUT: if the new entry IS NOT a demo AND the old entry
+            # was a demo, then the new entry will replace the old one.
+            if isdemo is True:
+                return
+            wasdemo = self.cursor.execute(
+                '''SELECT isdemo FROM gamesplat WHERE gameid=? AND 
+                storeid=? AND platformid=?''', (gid, storeid, platid))
+            wasdemo = wasdemo.fetchall()
+            wasdemo = bool(wasdemo[0][0])
+            if wasdemo is False:
+                return
+            self.cursor.execute(
+                'REPLACE INTO gamesplat VALUES (?,?,?,?, ?,?,?)',
+                (gid, storeid, platid, lang, link, subsid, int(False)))
     
     def searchgame(self, title):
         '''this function may be removed in a future'''
@@ -300,7 +548,8 @@ class GameDB:
     
     # calculate and return query, values for GameDB.filter_games
     def _fgquery(self, *, title=None, tags=None, platforms=None,
-                     stores=None, franchise=None, page=1, sortby='title'):
+                     stores=None, franchise=None, page=1, 
+                     sortby='title', limit=30):
         args = [title, tags, platforms, stores, franchise]
         query = 'SELECT id, title, vote, priority, img FROM game'
         query_segments = []
@@ -319,9 +568,13 @@ class GameDB:
                 injoins[relation].update(injoin_candidate)
             else:
                 injoins[relation] = injoin_candidate
+        if isinstance(limit, int) and limit > 1:
+            limit_str = 'LIMIT {}'.format(limit)
+        else:
+            limit_str = ''
         offset = ''
-        if page > 1:
-            offset = ' OFFSET {}'.format(30 * (page -1))
+        if page > 1 and limit_str != '':
+            offset = 'OFFSET {}'.format(limit * (page -1))
         if title is not None:
             query_segments.append('lower(title) LIKE ?')
             values.append('%{}%'.format(title.lower()))
@@ -336,13 +589,13 @@ class GameDB:
             query_segments.append( 'id IN\n{}'.format(str(j)) )
             values += j.values
         query += '\nAND '.join(query_segments)
-        query += '\nORDER BY {} LIMIT 30{}'.format(sortby, offset)
+        query += '\nORDER BY {} {} {}'.format(sortby, limit_str, offset)
         query = query.strip()
         return (query, values)
     
     def filter_games(self, *, title=None, tags=None, platforms=None,
                      stores=None, franchise=None, page=1, sortby='title',
-                     count_total=False):
+                     count_total=False, limit=30):
         '''return tuple: (filtered list of games, total_games_found)
         
         Almost every parameter is a filter that can be asked (or not) by user
@@ -384,7 +637,7 @@ class GameDB:
         query, values = self._fgquery(
                 title=title, tags=tags, platforms=platforms,
                 stores=stores, franchise=franchise, page=page,
-                sortby=sortby
+                sortby=sortby, limit=limit
         )
         result = self.cursor.execute(query, values)
         result = result.fetchall()
@@ -414,8 +667,8 @@ class GameDB:
             raise ValueError("view legal values are only 'name' or 'icon'")
         storeplats = self.cursor.execute('''
             SELECT store.{}, platform.{}, gamesplat.lang, gamesplat.link, 
-            subscription.{}, subscription.d, subscription.m, subscription.y
-            FROM gamesplat
+            subscription.{}, subscription.d, subscription.m, subscription.y,
+            gamesplat.isdemo FROM gamesplat
             INNER JOIN store ON store.id = gamesplat.storeid
             INNER JOIN platform ON platform.id = gamesplat.platformid
             LEFT JOIN subscription ON subscription.id = gamesplat.subscriptionid
