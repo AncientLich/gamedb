@@ -1,5 +1,4 @@
 from gamedb.gamedb import GameDB
 from gamedb.errors import *
-from gamedb.itms import *
-from gamedb.rels import *
-from gamedb.gameview import *
+import gamedb.items
+import gamedb.cnv

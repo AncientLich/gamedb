@@ -1,6 +1,10 @@
 import attr
-import gamedb.itms
-import gamedb.rels
+from gamedb.items.itms import Store as PlaceStore
+from gamedb.items.itms import Platform as PlacePlatform
+from gamedb.items.itms import Subscription as PlaceSubscription
+from gamedb.items.itms import Franchise as GVFranchise
+from gamedb.items.itms import Tag as GVTag
+from gamedb.items.rels import GameSplat as PlaceGameSplat
 
 
 
@@ -18,22 +22,22 @@ def _validator_list_of_type(xtype):
 @attr.s 
 class Place:
     store = attr.ib(validator=attr.validators.instance_of(
-        gamedb.itms.Store))
+        PlaceStore))
     platform = attr.ib(validator=attr.validators.instance_of(
-        gamedb.itms.Platform))
+        PlacePlatform))
     lang = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(str)))
     link = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(str)))
     subscription = attr.ib(validator=attr.validators.optional(
-        attr.validators.instance_of(gamedb.itms.Subscription)))
+        attr.validators.instance_of(PlaceSubscription)))
     isdemo = attr.ib(converter=bool, default=False)
     
     tablename = None
 
     def toGameSplat(self, *, gameid):
         subscr = self.subscription.ID if self.subscription else None
-        return gamedb.rels.GameSplat(gameid, self.store.ID, self.platform.ID,
+        return PlaceGameSplat(gameid, self.store.ID, self.platform.ID,
                                      self.lang, self.link,
                                      subscr, self.isdemo)
 
@@ -43,12 +47,12 @@ class Place:
 class GameView:
     ID = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(int)))
-    title = attr.ib(validator=attr.validators.instance_of(str))
+    name = attr.ib(validator=attr.validators.instance_of(str))
     year = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(int)))
     franchise = attr.ib(
         validator=attr.validators.optional(
-            attr.validators.instance_of(gamedb.itms.Franchise)))
+            attr.validators.instance_of(GVFranchise)))
     vote = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(int)))
     priority = attr.ib(
@@ -58,7 +62,7 @@ class GameView:
     note = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(str)))
     tags = attr.ib(attr.validators.optional(
-        _validator_list_of_type(gamedb.itms.Tag)))
+        _validator_list_of_type(GVTag)))
     places = attr.ib(attr.validators.optional(
         _validator_list_of_type(Place)))
     

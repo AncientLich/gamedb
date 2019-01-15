@@ -1,0 +1,1 @@
+from gamedb.cnv.mk_table_cmd import mk_table_cmd

@@ -1,4 +1,5 @@
 import attr
+from gamedb.items.itms import Subscription
 
 
 

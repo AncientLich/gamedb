@@ -1,4 +1,4 @@
-import gamedb.itms
+import gamedb.items
 
 
 class ItemNotFoundError(Exception):

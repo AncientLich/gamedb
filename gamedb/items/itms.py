@@ -22,7 +22,6 @@ class Store:
         validator=attr.validators.optional(attr.validators.instance_of(str)))
     group = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(Group)))
-    
     tablename = 'store'
 
 
@@ -35,7 +34,6 @@ class Platform:
         validator=attr.validators.optional(attr.validators.instance_of(str)))
     group = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(Group)))
-
     tablename = 'platform'
 
 
@@ -51,17 +49,21 @@ class Subscription:
     
     tablename = 'subscription'
     
-    def toDB(self):
-        return (self.ID, self.name, self.icon, 
-                self.expire.day, self.expire.month, self.expire.year)
-    
-    @classmethod
-    def fromDB(cls, dictionary):
-        d = dictionary.pop('d')
-        m = dictionary.pop('m')
-        y = dictionary.pop('y')
-        dictionary['expire'] = date(day=d, month=m, year=y)
-        return cls(dictionary)
+    # this parameter is used when an attribute is 'composite' and need some
+    # kind of conversion from-to DB
+    composite = {
+        # name of composite parameter
+        'expire': {
+            # 1) 'from' = 'from database'
+            'from': {
+            },
+            # 2) 'to' = 'to database'
+            'to': {
+            # 3) 'def' = 'definition to use in CREATE_TABLE'
+            },
+            'def': 'd INTEGER, m INTEGER, y INTEGER'
+        }
+    }
 
 
 
@@ -81,7 +83,7 @@ class Franchise:
 class Game:
     ID = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(int)))
-    title = attr.ib(validator=attr.validators.instance_of(str))
+    name = attr.ib(validator=attr.validators.instance_of(str))
     year = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(int)))
     franchise = attr.ib(
@@ -99,7 +101,6 @@ class Game:
     tablename = 'game'
 
 
-
 @attr.s
 class Tag:
     ID = attr.ib(
@@ -107,4 +108,5 @@ class Tag:
     name = attr.ib(validator=attr.validators.instance_of(str))
     
     tablename = 'tag'
+    externs = ()
 
