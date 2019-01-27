@@ -114,7 +114,7 @@ class TestGameDB(unittest.TestCase):
         self.assertEqual(cmd, 'CREATE TABLE IF NOT EXISTS subscription\n'
                                '(ID INTEGER PRIMARY KEY AUTOINCREMENT, '
                                'name TEXT, icon TEXT, '
-                               'd INTEGER, m INTEGER, y INTEGER)')
+                               'expire BLOB)')
     
     def test_x(self):
         pass

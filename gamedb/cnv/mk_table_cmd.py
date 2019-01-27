@@ -51,16 +51,6 @@ def _rel_primarykey(keyclasses):
 
 
 
-# when a class has one or more composite attributes, than this routine is
-# invoked by mk_table_cmd instead of default listcomp (see mk_table_cmd)
-#
-# when attribute is a composite attribute (cls.composite[att_name] exists)
-# then the table definition is kept from 'def' key
-# 
-# example: cls.composite['expire'] for attribute expire will be a dictionary
-# wich will contain the 'def' key.
-# composite = cls.composite['expire']
-# composite['def'] = 'd INTEGER, m INTEGER, y INTEGER'
 def _cls_params(cls, attributes, params_org):
     if isinstance(params_org, tuple):
         keyclasses, params = params_org
@@ -69,7 +59,7 @@ def _cls_params(cls, attributes, params_org):
     value = []
     references = {}
     for at_name, at_type in attributes:
-        if not hasattr(cls, 'composite') or at_name not in cls.composite:
+        if not hasattr(cls, 'blobs') or at_name not in cls.blobs:
             if at_type in gamedb.items.rules():
                 value.append('{}id INTEGER'.format(at_name))
                 references[at_name] = (
@@ -83,8 +73,7 @@ def _cls_params(cls, attributes, params_org):
                     ' PRIMARY KEY AUTOINCREMENT' if at_name == 'ID' else '')
                 )
         else:
-            composite = cls.composite[at_name]
-            value.append(composite['def'])
+            value.append('{} BLOB'.format(at_name))
     value = ', '.join(value)
     return (value, references)
 
